@@ -22,6 +22,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     BOARD = Chessboard('container', config)
+    BOARD.position(GAME.fen())
 
     function getPosition(m) {
       var a = document.getElementsByClassName('board-b72b1')[0]
@@ -36,6 +37,12 @@ window.addEventListener('DOMContentLoaded', () => {
       var randomIdx = Math.floor(Math.random() * possibleMoves.length)
       GAME.move(possibleMoves[randomIdx])
       BOARD.position(GAME.fen())
+      if (GAME.in_checkmate()) {
+        console.log('CHECKMATE!!!!');
+        return
+      } else if (GAME.in_check()) {
+        console.log('CHECK!!!!');
+      }
       if (GAME.turn() === 'w' && P1 === 'bot') {
         setTimeout(makeRandomMove, 500)
       } else if (GAME.turn() === 'b' && P2 === 'bot') {
@@ -177,6 +184,12 @@ window.addEventListener('DOMContentLoaded', () => {
         if (command) {
           if (GAME.move(command)) {
             BOARD.position(GAME.fen())
+            if (GAME.in_checkmate()) {
+              console.log('CHECKMATE!!!!');
+              return
+            } else if (GAME.in_check()) {
+              console.log('CHECK!!!!');
+            }
             if (GAME.turn() === 'w' && P1 === 'bot') {
               setTimeout(makeRandomMove, 500)
             } else if (GAME.turn() === 'b' && P2 === 'bot') {
