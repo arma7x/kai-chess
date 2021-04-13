@@ -145,17 +145,31 @@ window.addEventListener('DOMContentLoaded', () => {
         if (FOCUS == 'p' || FOCUS == 'P') {
           if (to === null) {
             command = `${_to}`
+            if (FOCUS_POINT[0] != _to[0]) {
+              command = `${FOCUS_POINT[0]}x${_to}` // En passant
+            }
           } else if (to.color !== from.color) {
             command = `${FOCUS_POINT[0]}x${_to}`
           }
           if (command) {
             if (command[command.length - 1] === '1' || command[command.length - 1] === '8') {
-              command += 'Q'
+              command += 'Q' // promotion to Queen
             }
           }
         } else {
           if (to === null) {
             command = `${FOCUS}${_to}`
+            if (FOCUS === 'K' || FOCUS === 'k') { // Castling
+              if (FOCUS_POINT === 'e1' && _to === 'g1') {
+                command = `O-O` // kingside castling
+              } else if (FOCUS_POINT === 'e1' && _to === 'c1') {
+                command = `O-O-O` // queenside castling
+              } else if (FOCUS_POINT === 'e8' && _to === 'g8') {
+                command = `O-O` // kingside castling
+              } else if (FOCUS_POINT === 'e8' && _to === 'c8') {
+                command = `O-O-O` // queenside castling
+              }
+            }
           } else if (to.color !== from.color) {
             command = `${FOCUS}x${_to}`
           }
@@ -191,7 +205,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return {GAME, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo}
   }
 
-  window['chess'] = createGame('bot', 'bot', 'black', 'container')
+  window['chess'] = createGame('human', 'human', 'white', 'container')
 
   document.addEventListener('keydown', (evt) => {
     switch (evt.key) {
