@@ -88,9 +88,22 @@ window.addEventListener('DOMContentLoaded', () => {
       MOVE = nm
     }
 
+    function startCursor() {
+      if (GAME.turn() === 'w' && POV === 'white') {
+        return [7, 0]
+      } else if (GAME.turn() === 'b' && POV === 'white') {
+        return [0, 7]
+      } else if (GAME.turn() === 'w' && POV === 'black') {
+        return [0, 7]
+      } else if (GAME.turn() === 'b' && POV === 'black') {
+        return [7, 0]
+      }
+      return [7, 0]
+    }
+
     function arrowUp() {
       if (MOVE == null) {
-        moveCursor(null, [7, 0])
+        moveCursor(null, startCursor())
       } else {
         var m = JSON.parse((JSON.stringify(MOVE)));
         var mv = m[0] - 1
@@ -103,7 +116,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function arrowRight() {
       if (MOVE == null) {
-        moveCursor(null, [7, 0])
+        moveCursor(null, startCursor())
       } else {
         var m = JSON.parse((JSON.stringify(MOVE)));
         var mv = m[1] + 1
@@ -116,7 +129,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function arrowDown() {
       if (MOVE == null) {
-        moveCursor(null, [7, 0])
+        moveCursor(null, startCursor())
       } else {
         var m = JSON.parse((JSON.stringify(MOVE)));
         var mv = m[0] + 1
@@ -129,7 +142,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function arrowLeft() {
       if (MOVE == null) {
-        moveCursor(null, [7, 0])
+        moveCursor(null, startCursor())
       } else {
         var m = JSON.parse((JSON.stringify(MOVE)));
         var mv = m[1] - 1
@@ -218,7 +231,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return {GAME, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo}
   }
 
-  window['chess'] = createGame('human', 'human', 'white', 'container')
+  window['chess'] = createGame('bot', 'bot', 'white', 'container')
 
   document.addEventListener('keydown', (evt) => {
     switch (evt.key) {
