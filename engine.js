@@ -134,14 +134,18 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
   }
 
   function startCursor() {
-    if (P1 === 'human' && GAME.turn() === 'w' && POV === 'white') {
-      return [7, 0]
-    } else if (P2 === 'human' && GAME.turn() === 'b' && POV === 'white') {
-      return [7, 0]
-    } else if (P1 === 'human' && GAME.turn() === 'w' && POV === 'black') {
-      return [0, 7]
-    } else if (P2 === 'human' && GAME.turn() === 'b' && POV === 'black') {
-      return [7, 0]
+    if (POV === 'white') {
+      if (GAME.turn() === 'w') {
+        return [7, 0]
+      } else {
+        return [0, 7]
+      }
+    } else {
+      if (GAME.turn() === 'b') {
+        return [7, 0]
+      } else {
+        return [0, 7]
+      }
     }
     return [7, 0]
   }
