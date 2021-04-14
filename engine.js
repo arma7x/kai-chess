@@ -21,6 +21,40 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
   var FOCUS_POINT = null
   var FOCUS_DOM = null
 
+  var whiteSquareGrey = '#a9a9a9'
+  var blackSquareGrey = '#696969'
+
+  function removeGreySquares () {
+    $(`#${container} .square-55d63`).css('background', '')
+  }
+
+  function greySquare (square) {
+    var $square = $(`#${container} .square-` + square)
+
+    var background = whiteSquareGrey
+    if ($square.hasClass('black-3c85d')) {
+      background = blackSquareGrey
+    }
+
+    $square.css('background', background)
+  }
+
+  function onMouseoverSquare (square) {
+    var moves = GAME.moves({
+      square: square,
+      verbose: true
+    })
+    if (moves.length === 0) return
+    greySquare(square)
+    for (var i = 0; i < moves.length; i++) {
+      greySquare(moves[i].to)
+    }
+  }
+
+  function onMouseoutSquare (square) {
+    removeGreySquares()
+  }
+
   var config = {
     orientation: P1 === 'bot' && P2 === 'human' ? 'black' : POV,
     pieceTheme: '/assets/images/{piece}.png',
@@ -127,9 +161,13 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
 
   function moveCursor(om, nm) {
     if (om) {
-      getPosition(om).classList.remove(`${GAME.turn()}-select-cursor`)
+      const el = getPosition(om);
+      onMouseoutSquare(el.dataset.square)
+      el.classList.remove(`${GAME.turn()}-select-cursor`)
     }
-    getPosition(nm).classList.add(`${GAME.turn()}-select-cursor`)
+    const el = getPosition(nm)
+    onMouseoverSquare(el.dataset.square)
+    el.classList.add(`${GAME.turn()}-select-cursor`)
     MOVE = nm
   }
 
