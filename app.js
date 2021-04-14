@@ -1,7 +1,15 @@
 window.addEventListener('DOMContentLoaded', () => {
 
-  function createGame(p1='bot', p2='bot', pov='white', container) {
-    
+  function createGame(p1='bot', p2='bot', pov='white', container, fen='', listener = {}) {
+
+    var onGameOver = typeof listener.onGameOver === 'function' ? listener.onGameOver : function(){}
+    var onStalemate = typeof listener.onStalemate === 'function' ? listener.onStalemate : function(){}
+    var onDraw = typeof listener.onDraw === 'function' ? listener.onDraw : function(){}
+    var onCheck = typeof listener.onCheck === 'function' ? listener.onCheck : function(){}
+    var onCheckmate = typeof listener.onCheckmate === 'function' ? listener.Checkmate : function(){}
+    var onTurn = typeof listener.onTurn === 'function' ? listener.onTurn : function(){}
+    var onThreefoldRepetition = typeof listener.onThreefoldRepetition === 'function' ? listener.onThreefoldRepetition : function(){}
+
     var P1 = p1
     var P2 = p2
     var POV = pov
@@ -22,7 +30,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     BOARD = Chessboard('container', config)
-    BOARD.position(GAME.fen())
 
     function getPosition(m) {
       var a = document.getElementsByClassName('board-b72b1')[0]
@@ -31,17 +38,45 @@ window.addEventListener('DOMContentLoaded', () => {
       return c
     }
 
+    function updateGame() {
+      BOARD.position(GAME.fen())
+      if (onTurn) {
+        onTurn(GAME.turn())
+      }
+      if (GAME.in_stalemate()) {
+        if (onStalemate)
+          onStalemate();
+      }
+      if (GAME.in_draw()) {
+        if (onDraw)
+          onDraw()
+      }
+      if (GAME.in_threefold_repetition()) {
+        if (onThreefoldRepetition)
+          onThreefoldRepetition()
+      }
+      if (GAME.in_checkmate()) {
+        if (onCheckmate)
+          onCheckmate()
+      } else if (GAME.in_check()) {
+        if (onCheck)
+          onCheck()
+      }
+      if (GAME.game_over()) {
+        if (onGameOver)
+          onGameOver()
+        return true
+      }
+    }
+
+    updateGame()
+
     function makeRandomMove() {
       var possibleMoves = GAME.moves()
-      if (GAME.game_over()) return
       var randomIdx = Math.floor(Math.random() * possibleMoves.length)
       GAME.move(possibleMoves[randomIdx])
-      BOARD.position(GAME.fen())
-      if (GAME.in_checkmate()) {
-        console.log('CHECKMATE!!!!');
+      if (updateGame() === true) {
         return
-      } else if (GAME.in_check()) {
-        console.log('CHECK!!!!');
       }
       if (GAME.turn() === 'w' && P1 === 'bot') {
         setTimeout(makeRandomMove, 500)
@@ -53,9 +88,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
     function undo() {
       if (GAME.undo()) {
-        BOARD.position(GAME.fen())
+        updateGame()
         if (GAME.undo()) {
-          BOARD.position(GAME.fen())
+          updateGame()
         } else {
           if ((P1 === 'bot' && GAME.turn() === 'w') || (P2 === 'bot' && GAME.turn() === 'b')) {
             setTimeout(makeRandomMove, 500)
@@ -196,12 +231,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         if (command) {
           if (GAME.move(command)) {
-            BOARD.position(GAME.fen())
-            if (GAME.in_checkmate()) {
-              console.log('CHECKMATE!!!!');
+            if (updateGame() === true) {
               return
-            } else if (GAME.in_check()) {
-              console.log('CHECK!!!!');
             }
             if (GAME.turn() === 'w' && P1 === 'bot') {
               setTimeout(makeRandomMove, 500)
@@ -228,17 +259,40 @@ window.addEventListener('DOMContentLoaded', () => {
       makeRandomMove()
     }
 
-    return {GAME, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo}
+    return {GAME, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame}
   }
 
-  window['chess'] = createGame('bot', 'bot', 'white', 'container')
+  var listener = {
+    onGameOver: function() {
+      console.log('onGameOver')
+    },
+    onStalemate: function(){
+      console.log('onStalemate')
+    },
+    onDraw: function() {
+      console.log('onDraw')
+    },
+    onCheck: function() {
+      console.log('onCheck')
+    },
+    onCheckmate: function() {
+      console.log('onCheckmate')
+    },
+    onTurn: function(color) {
+      console.log('onTurn', color)
+    },
+    onThreefoldRepetition: function() {
+      console.log('onThreefoldRepetition')
+    }
+  }
+
+  window['chess'] = createGame('bot', 'bot', 'white', 'container', '', listener)
 
   document.addEventListener('keydown', (evt) => {
     switch (evt.key) {
       case 'z':
       case 'Z':
         window['chess'].undo()
-        console.log('z');
         break
       case 'Backspace':
         window['chess'].resetCursor()
