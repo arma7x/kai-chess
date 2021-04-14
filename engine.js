@@ -276,12 +276,12 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
             } else if (FOCUS_POINT === 'e8' && _to === 'c8') {
               command = `O-O-O` // queenside castling
             }
-          } else if (FOCUS === 'R' || FOCUS === 'r') {
+          } else if (FOCUS === 'R' || FOCUS === 'r' || FOCUS === 'N' || FOCUS === 'n') {
             command = { from: FOCUS_POINT, to: _to }
           }
         } else if (to.color !== from.color) {
           command = `${FOCUS}x${_to}`
-          if (FOCUS === 'R' || FOCUS === 'r') {
+          if (FOCUS === 'R' || FOCUS === 'r' || FOCUS === 'N' || FOCUS === 'n') {
             command = { from: FOCUS_POINT, to: _to, flags: 'c' }
           }
         }
