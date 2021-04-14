@@ -436,7 +436,7 @@ window.addEventListener("load", function() {
           this.$router.showOptionMenu(title, menu, 'Select', (selected) => {
             setTimeout(() => {
               if (selected.text === 'Login') {
-                loginPage(this.$router);
+                // loginPage(this.$router);
               } else if (selected.text === 'Add Project') {
                 
               } else if (selected.text === 'Logout') {
