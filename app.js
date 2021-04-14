@@ -264,7 +264,7 @@ window.addEventListener("load", function() {
         }
       },
       right: function() {
-        createOfflineGame(this.$router, this.data.p1.toLowerCase().split(' ')[0], this.data.p2.toLowerCase().split(' ')[0], this.data.pov.toLowerCase(), null, this.data.p1Lvl, this.data.p2Lvl);
+        createOfflineGame(this.$router, this.data.p1.toLowerCase().split(' ')[0], this.data.p2.toLowerCase().split(' ')[0], this.data.pov.toLowerCase(), null);
       }
     },
     softKeyInputFocusText: { left: 'Done', center: '', right: '' },
@@ -294,7 +294,7 @@ window.addEventListener("load", function() {
     }
   });
 
-  const createOfflineGame = function ($router, p1='bot', p2='bot', pov='white', container, p1Lvl = 1, p2Lvl = 1, listener = {}) {
+  const createOfflineGame = function ($router, p1='bot', p2='bot', pov='white', container, listener = {}) {
     $router.push(
       new Kai({
         name: 'createOfflineGame',
@@ -332,7 +332,7 @@ window.addEventListener("load", function() {
               s.innerText = 'In Progress'
             }
           }
-          window['chess'] = createChessGame(p1, p2, pov, 'container', p1Lvl, p2Lvl, listener)
+          window['chess'] = createChessGame(p1, p2, pov, 'container', listener)
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '0px'
           //a[0].classList.add('kui-router-m-top-0')
