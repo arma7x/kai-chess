@@ -1,16 +1,30 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chess</title>
-  <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/chessboard-1.0.0.min.css">
-  <script src="/jquery-3.4.1.min.js"></script>
-  <script src="/chessboard-1.0.0.min.js"></script>
-  <script src="/chess.min.js"></script>
-  <script src="/app.js"></script>
-</head>
-<body style="margin:0px;padding:0px;background-color:#f3b735;height:294px;">
-  <div id="container" style="width:240px;height:240px;"></div>
-</body>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1">
+    <meta name="theme-color" content="#320374">
+    <title>K-Chess</title>
+    <link rel="stylesheet" href="/normalize.css">
+    <link rel="stylesheet" href="/kaiui.css">
+    <link rel="stylesheet" href="/chessboard-1.0.0.min.css">
+    <script src="/polyfill.min.js"></script>
+    <script src="/kaikit/index.js"></script>
+    <script src="/kaikit/components.js"></script>
+    <script src="/kaikit/router.js"></script>
+    <script src="/kaikit/state.js"></script>
+    <script src="/kaikit/mustache.min.js"></script>
+    <script src="/tab.js"></script>
+    <script src="/localforage.min.js"></script>
+    <script src="/ads-sdk.v4.min.js"></script>
+    <script src="/hashids.min.js"></script>
+    <script src="/jquery-3.4.1.min.js"></script>
+    <script src="/chessboard-1.0.0.min.js"></script>
+    <script src="/chess.min.js"></script>
+    <script src="/engine.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="/app.js"></script>
+  </body>
 </html>
