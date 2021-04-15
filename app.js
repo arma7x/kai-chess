@@ -371,6 +371,10 @@ window.addEventListener("load", function() {
           },
         },
         backKeyListener: function() {
+          if (window['chess'].getFocus()) {
+            window['chess'].resetCursor();
+            return true;
+          }
           this.$router.showDialog('Confirm', 'Are you sure to exit game ?', null, 'Yes', () => {
             this.$router.pop()
           }, 'No', () => {}, '', () => {}, () => {});

@@ -175,6 +175,10 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
     }
   }
 
+  function getFocus() {
+    return FOCUS
+  }
+
   function resetCursor() {
     if (MOVE) {
       var c = getPosition(MOVE)
@@ -380,5 +384,5 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
     makeRandomMove()
   }
 
-  return {WORKER, MOVE, GAME, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame, undoMove, nextMove, loadPGN, loadFEN}
+  return {WORKER, GAME, getFocus, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame, undoMove, nextMove, loadPGN, loadFEN}
 }
