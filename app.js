@@ -183,8 +183,8 @@ window.addEventListener("load", function() {
     }));
   }
 
-  const newOfflineGame = new Kai({
-    name: 'newOfflineGame',
+  const newLocalGame = new Kai({
+    name: 'newLocalGame',
     data: {
       title: '',
       p1: 'Human',
@@ -193,10 +193,10 @@ window.addEventListener("load", function() {
       p2Lvl: 0,
       pov: 'White',
     },
-    verticalNavClass: '.newOfflineGameNav',
-    templateUrl: document.location.origin + '/templates/newOfflineGame.html',
+    verticalNavClass: '.newLocalGameNav',
+    templateUrl: document.location.origin + '/templates/newLocalGame.html',
     mounted: function() {
-      this.$router.setHeaderTitle('Offline Game');
+      this.$router.setHeaderTitle('Local Game');
       navigator.spatialNavigationEnabled = false;
     },
     unmounted: function() {},
@@ -204,37 +204,29 @@ window.addEventListener("load", function() {
       setWhitePlayer: function() {
         var menu = [
           { "text": "Human", "checked": false },
-          { "text": "Bot", "checked": false },
-          //{ "text": "Bot 1", "lvl": 0, "checked": false },
-          //{ "text": "Bot 2", "lvl": 1, "checked": false },
-          //{ "text": "Bot 3", "lvl": 2, "checked": false }
+          { "text": "Bot 1", "checked": false },
+          { "text": "Bot 2", "checked": false },
+          { "text": "Bot 3", "checked": false }
         ];
         const idx = menu.findIndex((opt) => {
           return opt.text === this.data.p1;
         });
         this.$router.showSingleSelector('White', menu, 'Select', (selected) => {
           this.setData({ p1: selected.text });
-          if (selected.lvl) {
-            this.setData({ p1Lvl: selected.lvl });
-          }
         }, 'Cancel', null, undefined, idx);
       },
       setBlackPlayer: function() {
         var menu = [
           { "text": "Human", "checked": false },
-          { "text": "Bot", "checked": false },
-          //{ "text": "Bot 1", "lvl": 0, "checked": false },
-          //{ "text": "Bot 2", "lvl": 1, "checked": false },
-          //{ "text": "Bot 3", "lvl": 2, "checked": false }
+          { "text": "Bot 1", "checked": false },
+          { "text": "Bot 2", "checked": false },
+          { "text": "Bot 3", "checked": false }
         ];
         const idx = menu.findIndex((opt) => {
           return opt.text === this.data.p2;
         });
         this.$router.showSingleSelector('Black', menu, 'Select', (selected) => {
           this.setData({ p2: selected.text });
-          if (selected.lvl) {
-            this.setData({ p2Lvl: selected.lvl });
-          }
         }, 'Cancel', null, undefined, idx);
       },
       setPOV: function() {
@@ -264,10 +256,13 @@ window.addEventListener("load", function() {
         }
       },
       right: function() {
-        createOfflineGame(this.$router, this.data.p1.toLowerCase().split(' ')[0], this.data.p2.toLowerCase().split(' ')[0], this.data.pov.toLowerCase(), null);
+        var salt = window.crypto.getRandomValues(new Uint32Array(10))[0].toString();
+        const hashids2 = new Hashids(salt, 15);
+        const random = hashids2.encode(1);
+        createLocalGame(this.$router, random, this.data.p1.toLowerCase(), this.data.p2.toLowerCase(), this.data.pov.toLowerCase(), '');
       }
     },
-    softKeyInputFocusText: { left: 'Done', center: '', right: '' },
+    softKeyInputFocusText: { left: '', center: '', right: '' },
     softKeyInputFocusListener: {
       left: function() {
         if (document.activeElement.tagName === 'INPUT') {
@@ -294,16 +289,16 @@ window.addEventListener("load", function() {
     }
   });
 
-  const createOfflineGame = function ($router, p1='bot', p2='bot', pov='white', container, listener = {}) {
+  const createLocalGame = function ($router, game_id, p1='human', p2='human', pov='white', pgn='') {
     $router.push(
       new Kai({
-        name: 'createOfflineGame',
+        name: 'createLocalGame',
         data: {
-          title: 'createOfflineGame',
+          title: 'createLocalGame',
           counter: -1,
         },
         verticalNavClass: '.createOfflineGameNav',
-        templateUrl: document.location.origin + '/templates/createOfflineGame.html',
+        templateUrl: document.location.origin + '/templates/createLocalGame.html',
         mounted: function() {
           var listener = {
             onGameOver: function() {
@@ -332,10 +327,10 @@ window.addEventListener("load", function() {
               s.innerText = 'In Progress'
             }
           }
-          window['chess'] = createChessGame(p1, p2, pov, 'container', listener)
+          window['chess'] = createChessGame(p1, p2, pov, 'container', listener);
+          window['chess'].loadPGN(pgn);
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '0px'
-          //a[0].classList.add('kui-router-m-top-0')
         },
         unmounted: function() {
           window['chess'].WORKER.terminate()
@@ -348,13 +343,24 @@ window.addEventListener("load", function() {
           reset: function() {},
           plus: function() {},
         },
-        softKeyText: { left: 'Menu', center: 'MOVE', right: '' },
+        softKeyText: { left: 'Menu', center: 'MOVE', right: 'Undo' },
         softKeyListener: {
-          left: function() {},
+          left: function() {
+            var menu = [
+              { "text": "Save" }
+            ];
+            this.$router.showOptionMenu('Menu', menu, 'Select', (selected) => {
+              console.log(selected.text);
+            }, () => {}, 0);
+          },
           center: function() {
             window['chess'].enter()
           },
-          right: function() {}
+          right: function() {
+            if (p1.toLowerCase().indexOf('bot') > -1 && p2.toLowerCase().indexOf('bot') > -1)
+              return
+            window['chess'].undo()
+          }
         },
         dPadNavListener: {
           arrowUp: function() {
@@ -428,13 +434,19 @@ window.addEventListener("load", function() {
           var title = 'Menu';
           var menu = [
             { "text": "Help & Support" },
-            { "text": "Offline Game" },
+            { "text": "Local Game" },
+            { "text": "Saved Game" },
+            { "text": "Load PGN" },
+            { "text": "Load FEN" },
             { "text": "Login" }
           ];
           if (res) {
             menu = [
               { "text": "Help & Support" },
-              { "text": "Offline Game" },
+              { "text": "Local Game" },
+              { "text": "Saved Game" },
+              { "text": "Load PGN" },
+              { "text": "Load FEN" },
               { "text": "Logout" }
             ];
           }
@@ -456,8 +468,8 @@ window.addEventListener("load", function() {
                 
               } else if (selected.text === 'Help & Support') {
                 this.$router.push('helpSupportPage');
-              } else if (selected.text === 'Offline Game') {
-                this.$router.push('newOfflineGame');
+              } else if (selected.text === 'Local Game') {
+                this.$router.push('newLocalGame');
               }
             }, 101);
           }, () => {
@@ -534,9 +546,9 @@ window.addEventListener("load", function() {
         name: 'helpSupportPage',
         component: helpSupportPage
       },
-      'newOfflineGame': {
-        name: 'newOfflineGame',
-        component: newOfflineGame
+      'newLocalGame': {
+        name: 'newLocalGame',
+        component: newLocalGame
       }
     }
   });

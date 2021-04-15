@@ -1,4 +1,4 @@
-function createChessGame(p1='bot', p2='bot', pov='white', container, listener = {}) {
+function createChessGame(p1='human', p2='human', pov='white', container, listener = {}) {
 
   var onGameOver = typeof listener.onGameOver === 'function' ? listener.onGameOver : function(){}
   var onStalemate = typeof listener.onStalemate === 'function' ? listener.onStalemate : function(){}
@@ -8,8 +8,10 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
   var onTurn = typeof listener.onTurn === 'function' ? listener.onTurn : function(){}
   var onThreefoldRepetition = typeof listener.onThreefoldRepetition === 'function' ? listener.onThreefoldRepetition : function(){}
 
-  var P1 = p1
-  var P2 = p2
+  var P1 = p1.split(' ')[0]
+  var P2 = p2.split(' ')[0]
+  var P1_LVL = p1.split(' ').length > 1 ? JSON.parse(p1.split(' ')[1]) : 0
+  var P2_LVL = p2.split(' ').length > 1 ? JSON.parse(p2.split(' ')[1]) : 0
   var POV = pov
   var XAXIS = 'abcdefgh'
   var I_XAXIS = 'hgfedcba'
@@ -117,7 +119,7 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
   updateGame()
 
   function makeRandomMove() {
-    WORKER.postMessage({pgn: GAME.pgn(), minimaxDepth: 2 });
+    WORKER.postMessage({pgn: GAME.pgn(), minimaxDepth: (GAME.turn() === 'w' ? P1_LVL : P2_LVL) });
     WORKER.onmessage = (e) => {
       var success = GAME.move(e.data)
       if (success) {
@@ -170,6 +172,7 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
 
   function undo() {
     if (GAME.undo()) {
+      playSound('q')
       updateGame()
       resetCursor()
     }
