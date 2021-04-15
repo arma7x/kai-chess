@@ -61,6 +61,7 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
     position: 'start'
   }
 
+  var WORKER = new Worker('/worker_ai.js')
   BOARD = Chessboard('container', config)
 
   function getPosition(m) {
@@ -116,30 +117,60 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
   updateGame()
 
   function makeRandomMove() {
-    var possibleMoves = GAME.moves()
-    var randomIdx = Math.floor(Math.random() * possibleMoves.length)
-    GAME.move(possibleMoves[randomIdx])
-    if (updateGame() === true) {
-      return
+    WORKER.postMessage({pgn: GAME.pgn(), minimaxDepth: 2 });
+    WORKER.onmessage = (e) => {
+      var success = GAME.move(e.data)
+      if (success) {
+        playSound(success.flags)
+        if (updateGame() === true) {
+          return
+        }
+        if (GAME.turn() === 'w' && P1 === 'bot') {
+          setTimeout(makeRandomMove, 500)
+        } else if (GAME.turn() === 'b' && P2 === 'bot') {
+          setTimeout(makeRandomMove, 500)
+        }
+        resetCursor()
+      }
     }
-    if (GAME.turn() === 'w' && P1 === 'bot') {
-      setTimeout(makeRandomMove, 500)
-    } else if (GAME.turn() === 'b' && P2 === 'bot') {
-      setTimeout(makeRandomMove, 500)
+  }
+
+  function playSound(flags) {
+    switch (flags) {
+      case 'n':
+      case 'b':
+      case 'p':
+        sound = '/assets/sounds/audio-move.mp3'
+        break
+      case 'e':
+      case 'c':
+        sound = '/assets/sounds/audio-capture.mp3'
+        break
+      case 'k':
+      case 'q':
+        sound = '/assets/sounds/audio-castling.mp3'
+        break
     }
-    resetCursor()
+    var audio = new Audio(sound)
+    audio.play();
+  }
+
+  function nextMove(c) {
+    var success = GAME.move(c)
+    if (success) {
+      playSound(success.flags)
+      updateGame()
+      resetCursor()
+    }
+  }
+
+  function undoMove() {
+    undo()
   }
 
   function undo() {
     if (GAME.undo()) {
       updateGame()
-      if (GAME.undo()) {
-        updateGame()
-      } else {
-        if ((P1 === 'bot' && GAME.turn() === 'w') || (P2 === 'bot' && GAME.turn() === 'b')) {
-          setTimeout(makeRandomMove, 500)
-        }
-      }
       resetCursor()
     }
   }
@@ -317,8 +348,10 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
         }
       }
       if (command) {
-        if (GAME.move(command)) {
-          console.log(`Valid`, command);
+        var success = GAME.move(command)
+        if (success) {
+          playSound(success.flags)
+          console.log(`Valid`, command)
           if (updateGame() === true) {
             return
           }
@@ -347,5 +380,5 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
     makeRandomMove()
   }
 
-  return {GAME, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame, loadPGN, loadFEN}
+  return {WORKER, MOVE, GAME, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame, undoMove, nextMove, loadPGN, loadFEN}
 }

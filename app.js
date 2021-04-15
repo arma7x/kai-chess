@@ -338,6 +338,7 @@ window.addEventListener("load", function() {
           //a[0].classList.add('kui-router-m-top-0')
         },
         unmounted: function() {
+          window['chess'].WORKER.terminate()
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '28px'
           window['chess'] = null
