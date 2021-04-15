@@ -149,6 +149,7 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
       var c = getPosition(MOVE)
       c.classList.remove('w-select-cursor')
       c.classList.remove('b-select-cursor')
+      onMouseoutSquare(FOCUS_POINT)
       MOVE = null
       FOCUS = null
       FOCUS_POINT = null
@@ -162,26 +163,55 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
   function moveCursor(om, nm) {
     if (om) {
       const el = getPosition(om);
-      onMouseoutSquare(el.dataset.square)
+      if (FOCUS == null) {
+        onMouseoutSquare(el.dataset.square)
+      }
       el.classList.remove(`${GAME.turn()}-select-cursor`)
     }
     const el = getPosition(nm)
-    onMouseoverSquare(el.dataset.square)
+    if (FOCUS == null) {
+      onMouseoverSquare(el.dataset.square)
+    }
     el.classList.add(`${GAME.turn()}-select-cursor`)
     MOVE = nm
   }
 
+  function getMove(P) {
+    var a = document.getElementsByClassName('board-b72b1')[0]
+    for(var x=0;x<8;x++) {
+      for(var y=0;y<8;y++) {
+        if (a.children[x].children[y].dataset.square === P) {
+          return [x, y]
+        }
+      }
+    }
+  }
+
   function startCursor() {
     if (POV === 'white') {
+      const h = GAME.history({ verbose: true })
       if (GAME.turn() === 'w') {
+        if (h.length > 1) {
+          return getMove(h[h.length - 2].to);
+        }
         return [7, 0]
       } else {
+        if (h.length > 2) {
+          return getMove(h[h.length - 2].to);
+        }
         return [0, 7]
       }
     } else {
+      const h = GAME.history({ verbose: true })
       if (GAME.turn() === 'b') {
+        if (h.length > 2) {
+          return getMove(h[h.length - 2].to);
+        }
         return [7, 0]
       } else {
+        if (h.length > 1) {
+          return getMove(h[h.length - 2].to);
+        }
         return [0, 7]
       }
     }
@@ -298,7 +328,7 @@ function createChessGame(p1='bot', p2='bot', pov='white', container, listener = 
             setTimeout(makeRandomMove, 500)
           }
         } else {
-          console.log(`Illegal`);
+          console.log(`Illegal`, command);
         }
       }
       resetCursor()
