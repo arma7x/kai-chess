@@ -13,23 +13,20 @@
       align-items: center;
       justify-content: center;
     }
-
     .w-select-cursor {
-      -moz-box-shadow:    inset 0 0 10px #FF0000;
-      -webkit-box-shadow: inset 0 0 10px #FF0000;
-      box-shadow:         inset 0 0 10px #FF0000;
+      -moz-box-shadow:    inset 0 0 10px #008000;
+      -webkit-box-shadow: inset 0 0 10px #008000;
+      box-shadow:         inset 0 0 10px #008000;
     }
-
     .b-select-cursor {
       -moz-box-shadow:    inset 0 0 10px #000000;
       -webkit-box-shadow: inset 0 0 10px #000000;
       box-shadow:         inset 0 0 10px #000000;
     }
-
     .select-piece {
-      -moz-box-shadow:    inset 0 0 10px #008000;
-      -webkit-box-shadow: inset 0 0 10px #008000;
-      box-shadow:         inset 0 0 10px #008000;
+      -moz-box-shadow:    inset 0 0 10px #FF0000;
+      -webkit-box-shadow: inset 0 0 10px #FF0000;
+      box-shadow:         inset 0 0 10px #FF0000;
     }
     .score-board {
       height: 24px;
@@ -47,16 +44,16 @@
       color: #fff;
       font-size: 10px;
       font-weight: bold;
-      margin: 0 2px 2px 2px;
+      margin: 2px 2px 0px 2px;
     }
   </style>
   <div class="kai-container">
-    <div id="container" style="width:240px;height:240px;"></div>
     <div class="score-board">
       <div class="display">
         <div style="padding-left:2px;width:50%'">Player: <span id="player-turn"></span></div>
         <div style="padding-right:2px;width:50%'">Status: <span id="game-status"></span></div>
       </div>
     </div>
+    <div id="container" style="width:240px;height:240px;"></div>
   </div>
 </div>

@@ -290,6 +290,7 @@ window.addEventListener("load", function() {
   });
 
   const createLocalGame = function ($router, game_id, p1='human', p2='human', pov='white', pgn='', local_game = true) {
+    var HISTORY = [];
     $router.push(
       new Kai({
         name: 'createLocalGame',
@@ -330,8 +331,20 @@ window.addEventListener("load", function() {
           window['chess'] = createChessGame(p1, p2, pov, 'container', listener);
           window['chess'].loadPGN(pgn);
           if (!local_game) {
-            window['chess_pgn'] = new Chess();
-            window['chess_pgn'].load_pgn(pgn);
+            HISTORY = JSON.parse(JSON.stringify(window['chess'].GAME.history({ verbose: true })));
+            var c = window['chess'].GAME.history().length - 1;
+            if (HISTORY[c]) {
+              var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].from))
+              var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].to))
+              from.classList.add('w-select-cursor');
+              to.classList.add('w-select-cursor');
+              if (HISTORY[c - 1]) {
+                var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].from))
+                var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].to))
+                from.classList.remove('w-select-cursor');
+                to.classList.remove('w-select-cursor');
+              }
+            }
           }
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '0px'
@@ -341,7 +354,6 @@ window.addEventListener("load", function() {
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '28px'
           window['chess'] = null
-          window['chess_pgn'] = null
         },
         methods: {
           minus: function() {},
@@ -381,7 +393,29 @@ window.addEventListener("load", function() {
             if (local_game) {
               window['chess'].arrowUp()
             } else {
-               window['chess'].loadPGN(pgn);
+              window['chess'].loadPGN(pgn);
+              var a = document.getElementsByClassName('board-b72b1')[0]
+              for(var x=0;x<8;x++) {
+                for(var y=0;y<8;y++) {
+                  if (a.children[x].children[y]) {
+                    a.children[x].children[y].classList.remove('w-select-cursor');
+                    a.children[x].children[y].classList.remove('w-select-cursor');
+                  }
+                }
+              }
+              var c = window['chess'].GAME.history().length - 1;
+              if (HISTORY[c]) {
+                var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].from))
+                var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].to))
+                from.classList.add('w-select-cursor');
+                to.classList.add('w-select-cursor');
+                if (HISTORY[c - 1]) {
+                  var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].from))
+                  var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].to))
+                  from.classList.remove('w-select-cursor');
+                  to.classList.remove('w-select-cursor');
+                }
+              }
             }
           },
           arrowRight: function() {
@@ -389,9 +423,21 @@ window.addEventListener("load", function() {
               window['chess'].arrowRight()
             } else {
               var c = window['chess'].GAME.history().length;
-              var m = window['chess_pgn'].history({ verbose: true })
-              if (m[c]) {
-                window['chess'].nextMove(m[c]);
+              if (HISTORY[c]) {
+                window['chess'].nextMove(HISTORY[c]);
+                var c = window['chess'].GAME.history().length - 1;
+                if (HISTORY[c]) {
+                  var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].from))
+                  var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].to))
+                  from.classList.add('w-select-cursor');
+                  to.classList.add('w-select-cursor');
+                  if (HISTORY[c - 1]) {
+                    var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].from))
+                    var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].to))
+                    from.classList.remove('w-select-cursor');
+                    to.classList.remove('w-select-cursor');
+                  }
+                }
               }
             }
           },
@@ -399,7 +445,17 @@ window.addEventListener("load", function() {
             if (local_game) {
               window['chess'].arrowDown()
             } else {
-               window['chess'].reset();
+              window['chess'].reset();
+              var a = document.getElementsByClassName('board-b72b1')[0]
+              for(var x=0;x<8;x++) {
+                for(var y=0;y<8;y++) {
+                  if (a.children[x].children[y]) {
+                    a.children[x].children[y].classList.remove('w-select-cursor');
+                    a.children[x].children[y].classList.remove('w-select-cursor');
+                  }
+                }
+              }
+              this.dPadNavListener.arrowRight();
             }
           },
           arrowLeft: function() {
@@ -407,6 +463,19 @@ window.addEventListener("load", function() {
               window['chess'].arrowLeft()
             } else {
               window['chess'].undoMove()
+              var c = window['chess'].GAME.history().length;
+              if (HISTORY[c]) {
+                var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].from))
+                var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].to))
+                from.classList.remove('w-select-cursor');
+                to.classList.remove('w-select-cursor');
+                if (HISTORY[c - 1]) {
+                  var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].from))
+                  var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].to))
+                  from.classList.add('w-select-cursor');
+                  to.classList.add('w-select-cursor');
+                }
+              }
             }
           },
         },
