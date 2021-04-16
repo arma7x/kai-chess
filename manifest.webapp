@@ -29,6 +29,9 @@
     },
     "systemXHR": {
       "description": "Required to load remote content"
+    },
+    "device-storage:sdcard":{
+      "access": "readwrite"
     }
   },
   "locales": {

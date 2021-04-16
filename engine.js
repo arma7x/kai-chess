@@ -383,7 +383,9 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
     }
   }
   
-  if (P1 === 'bot') {
+  if (P1 === 'bot' && GAME.turn() === 'w') {
+    makeRandomMove()
+  } else if (P2 === 'bot' && GAME.turn() === 'b') {
     makeRandomMove()
   }
 

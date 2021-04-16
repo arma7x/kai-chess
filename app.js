@@ -390,6 +390,74 @@ window.addEventListener("load", function() {
     );
   }
 
+  const pgnFiles = new Kai({
+    name: 'pgnFiles',
+    data: {
+      title: 'pgnFiles',
+      counter: -1,
+      pgns: []
+    },
+    verticalNavClass: '.pgnFilesNav',
+    templateUrl: document.location.origin + '/templates/pgnFiles.html',
+    mounted: function() {
+      this.$router.setHeaderTitle('Load PGN');
+      var files = window['__DS__'].groups.application;
+      if (files) {
+        var pgns = []
+        files.forEach((file) => {
+          var n = file.split('/');
+          var n1 = n[n.length - 1];
+          var n2 = n1.split('.');
+          if (n2[n2.length - 1] === 'pgn') {
+            pgns.push({'name': n1, 'path': file});
+          }
+        });
+        this.setData({pgns: pgns});
+      }
+    },
+    unmounted: function() {},
+    methods: {
+      selected: function() {}
+    },
+    softKeyText: { left: '', center: 'SELECT', right: '' },
+    softKeyListener: {
+      left: function() {},
+      center: function() {
+        var pgn = this.data.pgns[this.verticalNavIndex];
+        if (pgn) {
+          window['__DS__'].getFile(pgn.path, (found) => {
+            var fr = new FileReader();
+            fr.onload = (event) => {
+              console.log(event.target.result);
+              createLocalGame(this.$router, `random`, 'human', 'human', 'white', event.target.result);
+            };
+            fr.readAsText(found);
+          }, (notfound) => {
+            console.log(notfound);
+          });
+        }
+      },
+      right: function() {}
+    },
+    dPadNavListener: {
+      arrowUp: function() {
+        this.navigateListNav(-1);
+      },
+      arrowRight: function() {
+        this.navigateTabNav(-1);
+      },
+      arrowDown: function() {
+        this.navigateListNav(1);
+      },
+      arrowLeft: function() {
+        this.navigateTabNav(1);
+      },
+    },
+    backKeyListener: function() {
+      this.components = [];
+    }
+  });
+
   const homepage = new Kai({
     name: 'homepage',
     data: {
@@ -454,8 +522,8 @@ window.addEventListener("load", function() {
             setTimeout(() => {
               if (selected.text === 'Login') {
                 // loginPage(this.$router);
-              } else if (selected.text === 'Add Project') {
-                
+              } else if (selected.text === 'Load PGN') {
+                this.$router.push('pgnFiles');
               } else if (selected.text === 'Logout') {
                 window['TODOIST_API'] = null;
                 localforage.removeItem('TODOIST_ACCESS_TOKEN');
@@ -549,6 +617,10 @@ window.addEventListener("load", function() {
       'newLocalGame': {
         name: 'newLocalGame',
         component: newLocalGame
+      },
+      'pgnFiles': {
+        name: 'pgnFiles',
+        component: pgnFiles
       }
     }
   });
@@ -604,6 +676,8 @@ window.addEventListener("load", function() {
       }, 500);
     }
   });
+
+  window['__DS__'] = new DataStorage();
 
   getKaiAd({
     publisher: 'ac3140f7-08d6-46d9-aa6f-d861720fba66',
