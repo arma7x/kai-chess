@@ -443,25 +443,28 @@ window.addEventListener("load", function() {
     methods: {
       selected: function() {},
       onChange: function(fileRegistry, documentTree, groups) {
-        this.methods.runFilter();
+        this.methods.runFilter(fileRegistry);
       },
-      onReady: function() {},
-      runFilter: function() {
-        setTimeout(() => {
-          var files = window['__DS__'].groups.application;
-          if (files) {
-            var pgns = []
-            files.forEach((file) => {
-              var n = file.split('/');
-              var n1 = n[n.length - 1];
-              var n2 = n1.split('.');
-              if (n2[n2.length - 1] === 'pgn') {
-                pgns.push({'name': n1, 'path': file});
-              }
-            });
-            this.setData({pgns: pgns});
+      onReady: function(status) {
+        if (status) {
+          this.$router.hideLoading();
+        } else {
+          this.$router.showLoading();
+        }
+      },
+      runFilter: function(fileRegistry) {
+        var pgns = []
+        fileRegistry.forEach((file) => {
+          var n = file.split('/');
+          var n1 = n[n.length - 1];
+          var n2 = n1.split('.');
+          if (n2.length > 1) {
+            if (n2[n2.length - 1] === 'pgn') {
+              pgns.push({'name': n1, 'path': file});
+            }
           }
-        }, 100);
+        });
+        this.setData({pgns: pgns});
       }
     },
     softKeyText: { left: '', center: 'SELECT', right: '' },
