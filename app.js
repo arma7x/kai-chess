@@ -289,7 +289,7 @@ window.addEventListener("load", function() {
     }
   });
 
-  const createLocalGame = function ($router, game_id, p1='human', p2='human', pov='white', pgn='') {
+  const createLocalGame = function ($router, game_id, p1='human', p2='human', pov='white', pgn='', local_game = true) {
     $router.push(
       new Kai({
         name: 'createLocalGame',
@@ -329,6 +329,10 @@ window.addEventListener("load", function() {
           }
           window['chess'] = createChessGame(p1, p2, pov, 'container', listener);
           window['chess'].loadPGN(pgn);
+          if (!local_game) {
+            window['chess_pgn'] = new Chess();
+            window['chess_pgn'].load_pgn(pgn);
+          }
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '0px'
         },
@@ -337,15 +341,19 @@ window.addEventListener("load", function() {
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '28px'
           window['chess'] = null
+          window['chess_pgn'] = null
         },
         methods: {
           minus: function() {},
           reset: function() {},
           plus: function() {},
         },
-        softKeyText: { left: 'Menu', center: 'MOVE', right: 'Undo' },
+        softKeyText: { left: local_game ? 'Menu' : '', center: local_game ? 'MOVE' : '', right: local_game ? 'Undo' : '' },
         softKeyListener: {
           left: function() {
+            if (!local_game) {
+              return
+            }
             var menu = [
               { "text": "Save" }
             ];
@@ -354,9 +362,15 @@ window.addEventListener("load", function() {
             }, () => {}, 0);
           },
           center: function() {
+            if (!local_game) {
+              return
+            }
             window['chess'].enter()
           },
           right: function() {
+            if (!local_game) {
+              return
+            }
             if (p1.toLowerCase().indexOf('bot') > -1 && p2.toLowerCase().indexOf('bot') > -1)
               return
             window['chess'].undo()
@@ -364,16 +378,36 @@ window.addEventListener("load", function() {
         },
         dPadNavListener: {
           arrowUp: function() {
-            window['chess'].arrowUp()
+            if (local_game) {
+              window['chess'].arrowUp()
+            } else {
+               window['chess'].loadPGN(pgn);
+            }
           },
           arrowRight: function() {
-            window['chess'].arrowRight()
+            if (local_game) {
+              window['chess'].arrowRight()
+            } else {
+              var c = window['chess'].GAME.history().length;
+              var m = window['chess_pgn'].history({ verbose: true })
+              if (m[c]) {
+                window['chess'].nextMove(m[c]);
+              }
+            }
           },
           arrowDown: function() {
-            window['chess'].arrowDown()
+            if (local_game) {
+              window['chess'].arrowDown()
+            } else {
+               window['chess'].reset();
+            }
           },
           arrowLeft: function() {
-            window['chess'].arrowLeft()
+            if (local_game) {
+              window['chess'].arrowLeft()
+            } else {
+              window['chess'].undoMove()
+            }
           },
         },
         backKeyListener: function() {
@@ -381,7 +415,7 @@ window.addEventListener("load", function() {
             window['chess'].resetCursor();
             return true;
           }
-          this.$router.showDialog('Confirm', 'Are you sure to exit game ?', null, 'Yes', () => {
+          this.$router.showDialog('Confirm', 'Are you sure to exit the game ?', null, 'Yes', () => {
             this.$router.pop()
           }, 'No', () => {}, '', () => {}, () => {});
           return true;
@@ -401,23 +435,34 @@ window.addEventListener("load", function() {
     templateUrl: document.location.origin + '/templates/pgnFiles.html',
     mounted: function() {
       this.$router.setHeaderTitle('Load PGN');
-      var files = window['__DS__'].groups.application;
-      if (files) {
-        var pgns = []
-        files.forEach((file) => {
-          var n = file.split('/');
-          var n1 = n[n.length - 1];
-          var n2 = n1.split('.');
-          if (n2[n2.length - 1] === 'pgn') {
-            pgns.push({'name': n1, 'path': file});
-          }
-        });
-        this.setData({pgns: pgns});
-      }
+      window['__DS__'] = new DataStorage(this.methods.onChange, this.methods.onReady);
     },
-    unmounted: function() {},
+    unmounted: function() {
+      window['__DS__'].destroy();
+    },
     methods: {
-      selected: function() {}
+      selected: function() {},
+      onChange: function(fileRegistry, documentTree, groups) {
+        this.methods.runFilter();
+      },
+      onReady: function() {},
+      runFilter: function() {
+        setTimeout(() => {
+          var files = window['__DS__'].groups.application;
+          if (files) {
+            var pgns = []
+            files.forEach((file) => {
+              var n = file.split('/');
+              var n1 = n[n.length - 1];
+              var n2 = n1.split('.');
+              if (n2[n2.length - 1] === 'pgn') {
+                pgns.push({'name': n1, 'path': file});
+              }
+            });
+            this.setData({pgns: pgns});
+          }
+        }, 100);
+      }
     },
     softKeyText: { left: '', center: 'SELECT', right: '' },
     softKeyListener: {
@@ -428,8 +473,7 @@ window.addEventListener("load", function() {
           window['__DS__'].getFile(pgn.path, (found) => {
             var fr = new FileReader();
             fr.onload = (event) => {
-              console.log(event.target.result);
-              createLocalGame(this.$router, `random`, 'human', 'human', 'white', event.target.result);
+              createLocalGame(this.$router, pgn.name, 'human', 'human', 'white', event.target.result, false);
             };
             fr.readAsText(found);
           }, (notfound) => {
@@ -444,13 +488,13 @@ window.addEventListener("load", function() {
         this.navigateListNav(-1);
       },
       arrowRight: function() {
-        this.navigateTabNav(-1);
+        //this.navigateTabNav(-1);
       },
       arrowDown: function() {
         this.navigateListNav(1);
       },
       arrowLeft: function() {
-        this.navigateTabNav(1);
+        //this.navigateTabNav(1);
       },
     },
     backKeyListener: function() {
@@ -676,8 +720,6 @@ window.addEventListener("load", function() {
       }, 500);
     }
   });
-
-  window['__DS__'] = new DataStorage();
 
   getKaiAd({
     publisher: 'ac3140f7-08d6-46d9-aa6f-d861720fba66',

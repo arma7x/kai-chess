@@ -170,6 +170,12 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
     undo()
   }
 
+  function reset() {
+    GAME.reset()
+    updateGame()
+    resetCursor()
+  }
+
   function undo() {
     if (GAME.undo()) {
       playSound('q')
@@ -389,5 +395,5 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
     makeRandomMove()
   }
 
-  return {WORKER, GAME, getFocus, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame, undoMove, nextMove, loadPGN, loadFEN}
+  return {WORKER, GAME, reset, getFocus, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame, undoMove, nextMove, loadPGN, loadFEN}
 }
