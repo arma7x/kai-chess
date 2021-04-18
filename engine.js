@@ -118,26 +118,8 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
 
   updateGame()
 
-  function makeRandomMove() {
-    WORKER.postMessage({pgn: GAME.pgn(), minimaxDepth: (GAME.turn() === 'w' ? P1_LVL : P2_LVL) });
-    WORKER.onmessage = (e) => {
-      var success = GAME.move(e.data)
-      if (success) {
-        playSound(success.flags)
-        if (updateGame() === true) {
-          return
-        }
-        if (GAME.turn() === 'w' && P1 === 'bot') {
-          setTimeout(makeRandomMove, 500)
-        } else if (GAME.turn() === 'b' && P2 === 'bot') {
-          setTimeout(makeRandomMove, 500)
-        }
-        resetCursor()
-      }
-    }
-  }
-
   function playSound(flags) {
+    var sound = '/assets/sounds/audio-move.mp3'
     switch (flags) {
       case 'n':
       case 'b':
@@ -155,6 +137,25 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
     }
     var audio = new Audio(sound)
     audio.play();
+  }
+
+  function makeRandomMove() {
+    WORKER.postMessage({pgn: GAME.pgn(), minimaxDepth: (GAME.turn() === 'w' ? P1_LVL : P2_LVL) });
+    WORKER.onmessage = (e) => {
+      var success = GAME.move(e.data)
+      if (success) {
+        playSound(success.flags)
+        if (updateGame() === true) {
+          return
+        }
+        if (GAME.turn() === 'w' && P1 === 'bot') {
+          setTimeout(makeRandomMove, 500)
+        } else if (GAME.turn() === 'b' && P2 === 'bot') {
+          setTimeout(makeRandomMove, 500)
+        }
+        resetCursor()
+      }
+    }
   }
 
   function nextMove(c) {
@@ -184,8 +185,16 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
     }
   }
 
+  function getMove() {
+    return MOVE;
+  }
+
   function getFocus() {
     return FOCUS
+  }
+
+  function getFocusPoint() {
+    return FOCUS_POINT
   }
 
   function resetCursor() {
@@ -220,7 +229,7 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
     MOVE = nm
   }
 
-  function getMove(P) {
+  function getMoveDOM(P) {
     var a = document.getElementsByClassName('board-b72b1')[0]
     for(var x=0;x<8;x++) {
       for(var y=0;y<8;y++) {
@@ -236,12 +245,12 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
       const h = GAME.history({ verbose: true })
       if (GAME.turn() === 'w') {
         if (h.length > 1) {
-          return getMove(h[h.length - 2].to);
+          return getMoveDOM(h[h.length - 2].to);
         }
         return [7, 0]
       } else {
         if (h.length > 2) {
-          return getMove(h[h.length - 2].to);
+          return getMoveDOM(h[h.length - 2].to);
         }
         return [0, 7]
       }
@@ -249,12 +258,12 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
       const h = GAME.history({ verbose: true })
       if (GAME.turn() === 'b') {
         if (h.length > 2) {
-          return getMove(h[h.length - 2].to);
+          return getMoveDOM(h[h.length - 2].to);
         }
         return [7, 0]
       } else {
         if (h.length > 1) {
-          return getMove(h[h.length - 2].to);
+          return getMoveDOM(h[h.length - 2].to);
         }
         return [0, 7]
       }
@@ -395,5 +404,5 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
     makeRandomMove()
   }
 
-  return {WORKER, GAME, reset, getFocus, getMove, getPosition, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame, undoMove, nextMove, loadPGN, loadFEN}
+  return {WORKER, GAME, reset, getFocus, getFocusPoint, getMoveDOM, getMove, getPosition, playSound, resetCursor, enter, arrowUp, arrowRight, arrowRight, arrowDown, arrowLeft, undo, updateGame, undoMove, nextMove, loadPGN, loadFEN}
 }

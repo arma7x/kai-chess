@@ -2,13 +2,22 @@ window.addEventListener("load", function() {
 
   localforage.setDriver(localforage.LOCALSTORAGE);
 
-  const CLIENT_ID = "37243c41f091443492812b2782548508";
-  const SCOPE = 'task:add,data:read,data:read_write,data:delete,project:delete';
+  const CLIENT_ID = "bXKD7cYJPPMzmlfk";
+  const SCOPE = 'challenge:write challenge:read bot:play board:play preference:read';
   var IFRAME_TIMER;
+  var LICHESS_API = null;
 
   const state = new KaiState({
     'TODOIST_SYNC': {},
   });
+
+  const parseNdJSON = (jsonString) => {
+    const type = typeof jsonString;
+    if (type !== 'string') throw new Error(`Input have to be string but got ${type}`);
+
+    const jsonRows = jsonString.split(/\n|\n\r/).filter(Boolean);
+    return jsonRows.map(jsonStringRow => JSON.parse(jsonStringRow));
+  };
 
   function getURLParam(key, target) {
     var values = [];
@@ -73,11 +82,7 @@ window.addEventListener("load", function() {
     var ping = new XMLHttpRequest({ mozSystem: true });
     ping.open('GET', 'https://malaysiaapi.herokuapp.com/', true);
     ping.send();
-
-    var salt = window.crypto.getRandomValues(new Uint32Array(10))[0].toString();
-    const hashids2 = new Hashids(salt, 15);
-    const random = hashids2.encode(1);
-    var url = `https://todoist.com/oauth/authorize?client_id=${CLIENT_ID}&scope=${SCOPE}&state=${random}`
+    var url = `https://oauth.lichess.org/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=https%3A%2F%2Fmalaysiaapi.herokuapp.com%2Flichess%2Fapi%2Fv1%2Fredirect&scope=${SCOPE}`
     $router.push(new Kai({
       name: 'loginPage',
       data: {
@@ -111,21 +116,20 @@ window.addEventListener("load", function() {
         var shadow = document.createElement('shadow');
         root2.appendChild(shadow);
         loginTab.iframe.addEventListener('mozbrowserlocationchange', function (e) {
-          if (e.detail.url.indexOf('https://malaysiaapi.herokuapp.com/todoist/api/v1/redirect') > -1) {
-            // console.log(window['loginTab'].url.url);
+          if (e.detail.url.indexOf('https://malaysiaapi.herokuapp.com/lichess/api/v1/redirect') > -1) {
+            console.log(window['loginTab'].url.url);
             const codeToken = getURLParam('code', window['loginTab'].url.url);
-            const stateToken = getURLParam('state', window['loginTab'].url.url);
-            if (codeToken.length > 0 && stateToken.length > 0) {
+            if (codeToken.length > 0) {
               setTimeout(() => {
                 var oauthAuthorize = new XMLHttpRequest({ mozSystem: true });
-                oauthAuthorize.open('GET', 'https://malaysiaapi.herokuapp.com/todoist/api/v1/exchange_token?code=' + codeToken[0], true);
+                oauthAuthorize.open('GET', 'https://malaysiaapi.herokuapp.com/lichess/api/v1/exchange_token?code=' + codeToken[0], true);
                 oauthAuthorize.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                 oauthAuthorize.setRequestHeader("X-Accept", 'application/json');
                 oauthAuthorize.onreadystatechange = function() {
                   if(oauthAuthorize.readyState == 4 && oauthAuthorize.status == 200) {
                     if (oauthAuthorize.response) {
                       var obj = JSON.parse(oauthAuthorize.response);
-                      localforage.setItem('TODOIST_ACCESS_TOKEN', obj.data)
+                      localforage.setItem('LICHESS_ACCESS_TOKEN', obj.data)
                       $router.showToast('Login Success');
                       $router.hideLoading()
                       $router.pop();
@@ -301,6 +305,7 @@ window.addEventListener("load", function() {
         verticalNavClass: '.createOfflineGameNav',
         templateUrl: document.location.origin + '/templates/createLocalGame.html',
         mounted: function() {
+          navigator.spatialNavigationEnabled = false;
           var listener = {
             onGameOver: function() {
               var s = document.getElementById('game-status')
@@ -334,13 +339,13 @@ window.addEventListener("load", function() {
             HISTORY = JSON.parse(JSON.stringify(window['chess'].GAME.history({ verbose: true })));
             var c = window['chess'].GAME.history().length - 1;
             if (HISTORY[c]) {
-              var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].from))
-              var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].to))
+              var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
+              var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
               from.classList.add('w-select-cursor');
               to.classList.add('w-select-cursor');
               if (HISTORY[c - 1]) {
-                var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].from))
-                var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].to))
+                var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
+                var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
                 from.classList.remove('w-select-cursor');
                 to.classList.remove('w-select-cursor');
               }
@@ -405,13 +410,13 @@ window.addEventListener("load", function() {
               }
               var c = window['chess'].GAME.history().length - 1;
               if (HISTORY[c]) {
-                var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].from))
-                var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].to))
+                var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
+                var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
                 from.classList.add('w-select-cursor');
                 to.classList.add('w-select-cursor');
                 if (HISTORY[c - 1]) {
-                  var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].from))
-                  var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].to))
+                  var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
+                  var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
                   from.classList.remove('w-select-cursor');
                   to.classList.remove('w-select-cursor');
                 }
@@ -427,13 +432,13 @@ window.addEventListener("load", function() {
                 window['chess'].nextMove(HISTORY[c]);
                 var c = window['chess'].GAME.history().length - 1;
                 if (HISTORY[c]) {
-                  var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].from))
-                  var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].to))
+                  var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
+                  var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
                   from.classList.add('w-select-cursor');
                   to.classList.add('w-select-cursor');
                   if (HISTORY[c - 1]) {
-                    var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].from))
-                    var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].to))
+                    var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
+                    var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
                     from.classList.remove('w-select-cursor');
                     to.classList.remove('w-select-cursor');
                   }
@@ -465,17 +470,177 @@ window.addEventListener("load", function() {
               window['chess'].undoMove()
               var c = window['chess'].GAME.history().length;
               if (HISTORY[c]) {
-                var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].from))
-                var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c].to))
+                var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
+                var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
                 from.classList.remove('w-select-cursor');
                 to.classList.remove('w-select-cursor');
                 if (HISTORY[c - 1]) {
-                  var from = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].from))
-                  var to = window['chess'].getPosition(window['chess'].getMove(HISTORY[c - 1].to))
+                  var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
+                  var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
                   from.classList.add('w-select-cursor');
                   to.classList.add('w-select-cursor');
                 }
               }
+            }
+          },
+        },
+        backKeyListener: function() {
+          if (window['chess'].getFocus()) {
+            window['chess'].resetCursor();
+            return true;
+          }
+          this.$router.showDialog('Confirm', 'Are you sure to exit the game ?', null, 'Yes', () => {
+            this.$router.pop()
+          }, 'No', () => {}, '', () => {}, () => {});
+          return true;
+        }
+      })
+    );
+  }
+
+  const createOnlineGame = function ($router, game_id, p1='human', p2='human', pov='white', fen='', local_game = true) {
+    $router.push(
+      new Kai({
+        name: 'createOnlineGame',
+        data: {
+          title: 'createOnlineGame',
+          counter: -1,
+          mvs: 0
+        },
+        verticalNavClass: '.createOfflineGameNav',
+        templateUrl: document.location.origin + '/templates/createLocalGame.html',
+        mounted: function() {
+          navigator.spatialNavigationEnabled = false;
+          var listener = {
+            onGameOver: function() {
+              var s = document.getElementById('game-status')
+              if (window['chess'].GAME.in_stalemate() || window['chess'].GAME.in_draw() || window['chess'].GAME.in_threefold_repetition()) {
+                s.innerText = 'Draw'
+              }
+              if (window['chess'].GAME.in_checkmate()) {
+                s.innerText = 'White Win'
+                if (window['chess'].GAME.turn() === 'w') {
+                  s.innerText = 'Black Win'
+                }
+              }
+            },
+            onCheck: function() {
+              var s = document.getElementById('game-status')
+              s.innerText = 'Check'
+            },
+            onTurn: function(color) {
+              var p = document.getElementById('player-turn')
+              p.innerText = 'White'
+              if (color === 'b') {
+                p.innerText = 'Black'
+              }
+              var s = document.getElementById('game-status')
+              s.innerText = 'In Progress'
+            }
+          }
+          window['chess'] = createChessGame(p1, p2, pov, 'container', listener);
+          window['chess'].loadFEN(fen);
+          var a = document.getElementsByClassName('kui-router-m-top')
+          a[0].style.marginTop = '0px'
+          window['chess_stream'] = LICHESS_API.streamBoardState(game_id, this.methods.onStream)
+        },
+        unmounted: function() {
+          window['chess'].WORKER.terminate()
+          var a = document.getElementsByClassName('kui-router-m-top')
+          a[0].style.marginTop = '28px'
+          window['chess'] = null
+          window['chess_stream'][1].abort();
+        },
+        methods: {
+          onStream: function(evt) {
+            var logs = parseNdJSON(evt);
+            if (logs.length === 1) {
+              k = logs[0];
+              if (k.state.moves !== '') {
+                var mvs = k.state.moves.split(' ');
+                mvs.forEach(m => {
+                  window['chess'].GAME.move(m, { sloppy: true })
+                })
+                window['chess'].updateGame();
+                this.data.mvs = mvs.length;
+              }
+            }
+            if (logs.length > 1) {
+              var mvs = logs[logs.length - 1].moves.split(' ');
+              if (this.data.mvs === 0) {
+                window['chess'].GAME.move(mvs[0], { sloppy: true });
+                window['chess'].resetCursor();;
+                var h = window['chess'].GAME.history({ verbose: true })
+                if (h.length > 0) {
+                  window['chess'].playSound(h[h.length - 1].flags);
+                }
+              }
+              if (mvs.length > this.data.mvs) {
+                window['chess'].GAME.move(mvs[mvs.length - 1], { sloppy: true });
+                window['chess'].updateGame();
+                window['chess'].resetCursor();
+                var h = window['chess'].GAME.history({ verbose: true })
+                if (h.length > 0) {
+                  window['chess'].playSound(h[h.length - 1].flags);
+                }
+                this.data.mvs = mvs.length;
+              }
+            }
+          }
+        },
+        softKeyText: { left: local_game ? 'Menu' : '', center: local_game ? 'MOVE' : '', right: local_game ? 'Undo' : '' },
+        softKeyListener: {
+          left: function() {
+            if (!local_game) {
+              return
+            }
+            var menu = [
+              { "text": "Save" }
+            ];
+            this.$router.showOptionMenu('Menu', menu, 'Select', (selected) => {
+              console.log(selected.text);
+            }, () => {}, 0);
+          },
+          center: function() {
+            if (!local_game && pov[0] !== window['chess'].GAME.turn()) {
+              console.log(1);
+              return
+            }
+            if (window['chess'].getFocus()) {
+              var toMove = `${window['chess'].getFocusPoint()}${window['chess'].getPosition(window['chess'].getMove()).dataset.square}`;
+              this.$router.showLoading();
+              LICHESS_API.makeBoardmove(game_id, toMove)[0]
+              .finally(() => {
+                this.$router.hideLoading();
+                window['chess'].resetCursor();
+              });
+              return
+            }
+            window['chess'].enter()
+          },
+          right: function() {
+            
+          }
+        },
+        dPadNavListener: {
+          arrowUp: function() {
+            if (local_game && pov[0] === window['chess'].GAME.turn()) {
+              window['chess'].arrowUp()
+            }
+          },
+          arrowRight: function() {
+            if (local_game && pov[0] === window['chess'].GAME.turn()) {
+              window['chess'].arrowRight()
+            }
+          },
+          arrowDown: function() {
+            if (local_game && pov[0] === window['chess'].GAME.turn()) {
+              window['chess'].arrowDown()
+            }
+          },
+          arrowLeft: function() {
+            if (local_game && pov[0] === window['chess'].GAME.turn()) {
+              window['chess'].arrowLeft()
             }
           },
         },
@@ -503,6 +668,7 @@ window.addEventListener("load", function() {
     verticalNavClass: '.pgnFilesNav',
     templateUrl: document.location.origin + '/templates/pgnFiles.html',
     mounted: function() {
+      navigator.spatialNavigationEnabled = false;
       this.$router.setHeaderTitle('Load PGN');
       window['__DS__'] = new DataStorage(this.methods.onChange, this.methods.onReady);
     },
@@ -582,7 +748,7 @@ window.addEventListener("load", function() {
       projects: [],
       projectsVerticalNavIndexID: 0,
       empty: true,
-      TODOIST_ACCESS_TOKEN: null
+      LICHESS_ACCESS_TOKEN: null
     },
     verticalNavClass: '.homepageNav',
     templateUrl: document.location.origin + '/templates/homepage.html',
@@ -613,41 +779,52 @@ window.addEventListener("load", function() {
     softKeyText: { left: 'Menu', center: '', right: '' },
     softKeyListener: {
       left: function() {
-        localforage.getItem('TODOIST_ACCESS_TOKEN')
+        localforage.getItem('LICHESS_ACCESS_TOKEN')
         .then((res) => {
           var title = 'Menu';
           var menu = [
             { "text": "Help & Support" },
+            { "text": "Login Lichess" },
             { "text": "Local Game" },
             { "text": "Saved Game" },
             { "text": "Load PGN" },
-            { "text": "Load FEN" },
-            { "text": "Login" }
+            { "text": "Load FEN" }
           ];
           if (res) {
             menu = [
               { "text": "Help & Support" },
+              { "text": "Resume Game" },
               { "text": "Local Game" },
               { "text": "Saved Game" },
               { "text": "Load PGN" },
               { "text": "Load FEN" },
               { "text": "Logout" }
             ];
+            LICHESS_API = new Lichess(res.access_token);
           }
           this.$router.showOptionMenu(title, menu, 'Select', (selected) => {
             setTimeout(() => {
-              if (selected.text === 'Login') {
-                // loginPage(this.$router);
+              if (selected.text === 'Login Lichess') {
+                loginPage(this.$router);
+              } else if (selected.text === 'Resume Game') {
+                LICHESS_API.getOngoingGames()[0]
+                .then((r) => {
+                  if (r.response.nowPlaying.length > 0) {
+                    var g = r.response.nowPlaying[0];
+                    // console.log(g);
+                    createOnlineGame(this.$router, g.gameId, 'human', 'human', g.color, '', true);
+                  }
+                })
+                .catch(e => {
+                  console.log(e);
+                })
               } else if (selected.text === 'Load PGN') {
                 this.$router.push('pgnFiles');
               } else if (selected.text === 'Logout') {
                 window['TODOIST_API'] = null;
-                localforage.removeItem('TODOIST_ACCESS_TOKEN');
-                localforage.removeItem('TODOIST_SYNC');
+                localforage.removeItem('LICHESS_ACCESS_TOKEN');
                 this.verticalNavIndex = 0;
-                this.setData({ TODOIST_ACCESS_TOKEN: null });
-                this.setData({ projects: [], offset: -1 });
-                this.$router.setSoftKeyText('Menu', '', '');
+                this.setData({ LICHESS_ACCESS_TOKEN: null });
               } else if (selected.text === 'Sync') {
                 
               } else if (selected.text === 'Help & Support') {
@@ -800,6 +977,9 @@ window.addEventListener("load", function() {
     onerror: err => console.error(err),
     onready: ad => {
       ad.call('display')
+      setTimeout(() => {
+        document.body.style.position = '';
+      }, 1000);
     }
   })
 
