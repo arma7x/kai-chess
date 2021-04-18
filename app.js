@@ -309,8 +309,14 @@ window.addEventListener("load", function() {
           var listener = {
             onGameOver: function() {
               var s = document.getElementById('game-status')
-              if (window['chess'].GAME.in_stalemate() || window['chess'].GAME.in_draw() || window['chess'].GAME.in_threefold_repetition()) {
+              if (window['chess'].GAME.in_stalemate()) {
+                s.innerText = 'Stalemate'
+              }
+              if (window['chess'].GAME.in_draw()) {
                 s.innerText = 'Draw'
+              }
+              if (window['chess'].GAME.in_threefold_repetition()) {
+                s.innerText = 'Threefold Repetition'
               }
               if (window['chess'].GAME.in_checkmate()) {
                 s.innerText = 'White Win'
@@ -331,6 +337,22 @@ window.addEventListener("load", function() {
               }
               var s = document.getElementById('game-status')
               s.innerText = 'In Progress'
+              if (local_game && window['chess'] != null) {
+                var _H = window['chess'].GAME.history({ verbose: true });
+                var c = _H.length - 1;
+                if (_H[c]) {
+                  var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].from))
+                  var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].to))
+                  from.classList.add('h-select-cursor');
+                  to.classList.add('h-select-cursor');
+                  if (_H[c - 1]) {
+                    var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c - 1].from))
+                    var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c - 1].to))
+                    from.classList.remove('h-select-cursor');
+                    to.classList.remove('h-select-cursor');
+                  }
+                }
+              }
             }
           }
           window['chess'] = createChessGame(p1, p2, pov, 'container', listener);
@@ -341,13 +363,13 @@ window.addEventListener("load", function() {
             if (HISTORY[c]) {
               var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
               var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
-              from.classList.add('w-select-cursor');
-              to.classList.add('w-select-cursor');
+              from.classList.add('h-select-cursor');
+              to.classList.add('h-select-cursor');
               if (HISTORY[c - 1]) {
                 var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
                 var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
-                from.classList.remove('w-select-cursor');
-                to.classList.remove('w-select-cursor');
+                from.classList.remove('h-select-cursor');
+                to.classList.remove('h-select-cursor');
               }
             }
           }
@@ -403,8 +425,8 @@ window.addEventListener("load", function() {
               for(var x=0;x<8;x++) {
                 for(var y=0;y<8;y++) {
                   if (a.children[x].children[y]) {
-                    a.children[x].children[y].classList.remove('w-select-cursor');
-                    a.children[x].children[y].classList.remove('w-select-cursor');
+                    a.children[x].children[y].classList.remove('h-select-cursor');
+                    a.children[x].children[y].classList.remove('h-select-cursor');
                   }
                 }
               }
@@ -412,13 +434,13 @@ window.addEventListener("load", function() {
               if (HISTORY[c]) {
                 var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
                 var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
-                from.classList.add('w-select-cursor');
-                to.classList.add('w-select-cursor');
+                from.classList.add('h-select-cursor');
+                to.classList.add('h-select-cursor');
                 if (HISTORY[c - 1]) {
                   var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
                   var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
-                  from.classList.remove('w-select-cursor');
-                  to.classList.remove('w-select-cursor');
+                  from.classList.remove('h-select-cursor');
+                  to.classList.remove('h-select-cursor');
                 }
               }
             }
@@ -434,13 +456,13 @@ window.addEventListener("load", function() {
                 if (HISTORY[c]) {
                   var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
                   var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
-                  from.classList.add('w-select-cursor');
-                  to.classList.add('w-select-cursor');
+                  from.classList.add('h-select-cursor');
+                  to.classList.add('h-select-cursor');
                   if (HISTORY[c - 1]) {
                     var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
                     var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
-                    from.classList.remove('w-select-cursor');
-                    to.classList.remove('w-select-cursor');
+                    from.classList.remove('h-select-cursor');
+                    to.classList.remove('h-select-cursor');
                   }
                 }
               }
@@ -455,8 +477,8 @@ window.addEventListener("load", function() {
               for(var x=0;x<8;x++) {
                 for(var y=0;y<8;y++) {
                   if (a.children[x].children[y]) {
-                    a.children[x].children[y].classList.remove('w-select-cursor');
-                    a.children[x].children[y].classList.remove('w-select-cursor');
+                    a.children[x].children[y].classList.remove('h-select-cursor');
+                    a.children[x].children[y].classList.remove('h-select-cursor');
                   }
                 }
               }
@@ -472,13 +494,13 @@ window.addEventListener("load", function() {
               if (HISTORY[c]) {
                 var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
                 var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
-                from.classList.remove('w-select-cursor');
-                to.classList.remove('w-select-cursor');
+                from.classList.remove('h-select-cursor');
+                to.classList.remove('h-select-cursor');
                 if (HISTORY[c - 1]) {
                   var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
                   var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
-                  from.classList.add('w-select-cursor');
-                  to.classList.add('w-select-cursor');
+                  from.classList.add('h-select-cursor');
+                  to.classList.add('h-select-cursor');
                 }
               }
             }
@@ -499,6 +521,11 @@ window.addEventListener("load", function() {
   }
 
   const createOnlineGame = function ($router, game_id, p1='human', p2='human', pov='white', fen='', local_game = true) {
+
+    var GAME_INIT = true;
+    var DRAW_OFFER = false;
+    var GAME_STATUS = true;
+
     $router.push(
       new Kai({
         name: 'createOnlineGame',
@@ -514,8 +541,14 @@ window.addEventListener("load", function() {
           var listener = {
             onGameOver: function() {
               var s = document.getElementById('game-status')
-              if (window['chess'].GAME.in_stalemate() || window['chess'].GAME.in_draw() || window['chess'].GAME.in_threefold_repetition()) {
+              if (window['chess'].GAME.in_stalemate()) {
+                s.innerText = 'Stalemate'
+              }
+              if (window['chess'].GAME.in_draw()) {
                 s.innerText = 'Draw'
+              }
+              if (window['chess'].GAME.in_threefold_repetition()) {
+                s.innerText = 'Threefold Repetition'
               }
               if (window['chess'].GAME.in_checkmate()) {
                 s.innerText = 'White Win'
@@ -536,6 +569,22 @@ window.addEventListener("load", function() {
               }
               var s = document.getElementById('game-status')
               s.innerText = 'In Progress'
+              if (local_game && window['chess'] != null) {
+                var _H = window['chess'].GAME.history({ verbose: true });
+                var c = _H.length - 1;
+                if (_H[c]) {
+                  var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].from))
+                  var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].to))
+                  from.classList.add('h-select-cursor');
+                  to.classList.add('h-select-cursor');
+                  if (_H[c - 1]) {
+                    var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c - 1].from))
+                    var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c - 1].to))
+                    from.classList.remove('h-select-cursor');
+                    to.classList.remove('h-select-cursor');
+                  }
+                }
+              }
             }
           }
           window['chess'] = createChessGame(p1, p2, pov, 'container', listener);
@@ -554,7 +603,8 @@ window.addEventListener("load", function() {
         methods: {
           onStream: function(evt) {
             var logs = parseNdJSON(evt);
-            if (logs.length === 1) {
+            console.log(logs);
+            if (logs.length === 1 && GAME_INIT) {
               k = logs[0];
               if (k.state.moves !== '') {
                 var mvs = k.state.moves.split(' ');
@@ -563,47 +613,141 @@ window.addEventListener("load", function() {
                 })
                 window['chess'].updateGame();
                 this.data.mvs = mvs.length;
+                var _draw = 'wdraw'
+                if (pov == 'white') {
+                  _draw = 'bdraw'
+                }
+                DRAW_OFFER = k.state[_draw];
+                if (DRAW_OFFER) {
+                  this.$router.setSoftKeyRightText('ACCEPT');
+                } else {
+                  this.$router.setSoftKeyRightText('');
+                }
+                GAME_INIT = false;
               }
             }
             if (logs.length > 1) {
-              var mvs = logs[logs.length - 1].moves.split(' ');
-              if (this.data.mvs === 0) {
-                window['chess'].GAME.move(mvs[0], { sloppy: true });
-                window['chess'].resetCursor();;
-                var h = window['chess'].GAME.history({ verbose: true })
-                if (h.length > 0) {
-                  window['chess'].playSound(h[h.length - 1].flags);
+              if (logs[logs.length - 1].type === 'gameState') {
+                var log = logs[logs.length - 1];
+                var mvs = log.moves.split(' ');
+                if (this.data.mvs === 0 && log.status === 'started') {
+                  window['chess'].GAME.move(mvs[0], { sloppy: true });
+                  window['chess'].resetCursor();
+                  var h = window['chess'].GAME.history({ verbose: true })
+                  if (h.length > 0) {
+                    window['chess'].playSound(h[h.length - 1].flags);
+                  }
                 }
-              }
-              if (mvs.length > this.data.mvs) {
-                window['chess'].GAME.move(mvs[mvs.length - 1], { sloppy: true });
-                window['chess'].updateGame();
-                window['chess'].resetCursor();
-                var h = window['chess'].GAME.history({ verbose: true })
-                if (h.length > 0) {
-                  window['chess'].playSound(h[h.length - 1].flags);
+                if (mvs.length > this.data.mvs && log.status === 'started') {
+                  window['chess'].GAME.move(mvs[mvs.length - 1], { sloppy: true });
+                  window['chess'].updateGame();
+                  window['chess'].resetCursor();
+                  var h = window['chess'].GAME.history({ verbose: true })
+                  if (h.length > 0) {
+                    window['chess'].playSound(h[h.length - 1].flags);
+                  }
+                  this.data.mvs = mvs.length;
+                  if (pov == 'white') {
+                    DRAW_OFFER = log['bdraw'];
+                  } else if (pov === 'black') {
+                    DRAW_OFFER = log['wdraw'];
+                  }
+                  if (DRAW_OFFER) {
+                    this.$router.setSoftKeyRightText('ACCEPT');
+                  } else {
+                    this.$router.setSoftKeyRightText('');
+                  }
                 }
-                this.data.mvs = mvs.length;
+                if (log.status === 'draw') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = 'Draw'
+                  GAME_STATUS = false
+                }
+                if (log.status === 'resign') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = `Resign, ${log.winner[0].toUpperCase()} Win`
+                  GAME_STATUS = false
+                }
+                if (log.status === 'aborted') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = 'Abort'
+                  GAME_STATUS = false
+                }
+              } else if (logs[logs.length - 1].type === 'chatLine') {
+                if (logs[logs.length - 1].username === 'lichess') {
+                  if (logs[logs.length - 1].text === 'White offers draw' && pov === 'black' && !DRAW_OFFER) {
+                    this.$router.setSoftKeyRightText('ACCEPT');
+                    DRAW_OFFER = true
+                  } else if (logs[logs.length - 1].text === 'Black offers draw' && pov === 'white' && !DRAW_OFFER) {
+                    this.$router.setSoftKeyRightText('ACCEPT');
+                    DRAW_OFFER = true
+                  } else if (logs[logs.length - 1].text === 'White declines draw') {
+                    this.$router.setSoftKeyRightText('');
+                    DRAW_OFFER = false
+                  } else if (logs[logs.length - 1].text === 'Black declines draw') {
+                    this.$router.setSoftKeyRightText('');
+                    DRAW_OFFER = false
+                  } else if (logs[logs.length - 1].text  === 'Draw offer accepted') {
+                    this.$router.setSoftKeyRightText('');
+                    DRAW_OFFER = false
+                  }
+                }
               }
             }
+          },
+          sendDrawOffer: function(action) {
+            this.$router.showLoading();
+            LICHESS_API.handleDrawOffers(game_id, action.toLowerCase())[0]
+            .finally(() => {
+              this.$router.hideLoading();
+            });
           }
         },
-        softKeyText: { left: local_game ? 'Menu' : '', center: local_game ? 'MOVE' : '', right: local_game ? 'Undo' : '' },
+        softKeyText: { left: local_game ? 'Menu' : '', center: local_game ? 'MOVE' : '', right: '' },
         softKeyListener: {
           left: function() {
             if (!local_game) {
               return
             }
-            var menu = [
-              { "text": "Save" }
-            ];
+            var menu = [{ "text": "Save" }];
+            if (!DRAW_OFFER && GAME_STATUS) {
+              menu.push({ "text": "Offer Draw" });
+            }
+            if (GAME_STATUS) {
+              menu.push({ "text": "Resign" });
+            }
+            if (GAME_STATUS) {
+              menu.push({ "text": "Abort" });
+            }
             this.$router.showOptionMenu('Menu', menu, 'Select', (selected) => {
-              console.log(selected.text);
+              if (selected.text === "Offer Draw") {
+                this.methods.sendDrawOffer('yes');
+              } else if (selected.text === "Resign") {
+                this.$router.showLoading();
+                LICHESS_API.resignGame(game_id)[0]
+                .finally(() => {
+                  this.$router.hideLoading();
+                });
+              } else if (selected.text === "Abort") {
+                this.$router.showLoading();
+                LICHESS_API.abortGame(game_id)[0]
+                .finally(() => {
+                  this.$router.hideLoading();
+                });
+              }
             }, () => {}, 0);
           },
           center: function() {
+            if (!GAME_STATUS) {
+              return
+            }
             if (!local_game && pov[0] !== window['chess'].GAME.turn()) {
-              console.log(1);
               return
             }
             if (window['chess'].getFocus()) {
@@ -619,26 +763,54 @@ window.addEventListener("load", function() {
             window['chess'].enter()
           },
           right: function() {
-            
+            if (DRAW_OFFER) {
+              var menu = [
+                { "text": "Accept", "val": "yes","checked": false },
+                { "text": "Decline", "val": "no", "checked": false },
+              ];
+              this.$router.showOptionMenu('Your opponent offers a draw', menu, 'Select', (selected) => {
+                this.methods.sendDrawOffer(selected.val);
+              }, () => {
+                setTimeout(() => {
+                  if (DRAW_OFFER) {
+                    this.$router.setSoftKeyRightText('ACCEPT');
+                  } else {
+                    this.$router.setSoftKeyRightText('');
+                  }
+                }, 101);
+              }, -1);
+            }
           }
         },
         dPadNavListener: {
           arrowUp: function() {
+            if (!GAME_STATUS) {
+              return
+            }
             if (local_game && pov[0] === window['chess'].GAME.turn()) {
               window['chess'].arrowUp()
             }
           },
           arrowRight: function() {
+            if (!GAME_STATUS) {
+              return
+            }
             if (local_game && pov[0] === window['chess'].GAME.turn()) {
               window['chess'].arrowRight()
             }
           },
           arrowDown: function() {
+            if (!GAME_STATUS) {
+              return
+            }
             if (local_game && pov[0] === window['chess'].GAME.turn()) {
               window['chess'].arrowDown()
             }
           },
           arrowLeft: function() {
+            if (!GAME_STATUS) {
+              return
+            }
             if (local_game && pov[0] === window['chess'].GAME.turn()) {
               window['chess'].arrowLeft()
             }
