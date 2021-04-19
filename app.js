@@ -636,7 +636,7 @@ window.addEventListener("load", function() {
                     window['chess'].playSound(h[h.length - 1].flags);
                   }
                 }
-                if (mvs.length > this.data.mvs && log.status === 'started') {
+                if (mvs.length > this.data.mvs) {
                   window['chess'].GAME.move(mvs[mvs.length - 1], { sloppy: true });
                   window['chess'].updateGame();
                   window['chess'].resetCursor();
@@ -645,6 +645,8 @@ window.addEventListener("load", function() {
                     window['chess'].playSound(h[h.length - 1].flags);
                   }
                   this.data.mvs = mvs.length;
+                }
+                if (mvs.length > this.data.mvs && log.status === 'started') {
                   if (pov == 'white') {
                     DRAW_OFFER = log['bdraw'];
                   } else if (pov === 'black') {
