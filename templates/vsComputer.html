@@ -20,15 +20,15 @@
     </li>
     <li class="vsComputerNav" style="border-top:1px dashed #320374;font-size:12px;white-space:pre-wrap!important;word-break:break-word!important;">Clock initial time in seconds. If empty, a correspondence game is created.</li>
     <li style="border-top:1px dashed #320374;">
-      <input id="clock.limit" class="vsComputerNav kui-input" type="number" style="margin:2%;width:96%;" placeholder="Clock Limit(0 - 10800s)" value="{{ clock.limit }}"/>
+      <input id="clock.limit" class="vsComputerNav kui-input" type="tel" style="margin:2%;width:96%;" placeholder="Clock Limit(0 - 10800s)" value="{{ clock.limit }}"/>
     </li>
     <li class="vsComputerNav" style="border-top:1px dashed #320374;font-size:12px;white-space:pre-wrap!important;word-break:break-word!important;">Clock increment in seconds. If empty, a correspondence game is created.</li>
     <li style="border-top:1px dashed #320374;">
-      <input id="clock.increment" class="vsComputerNav kui-input" type="number" style="margin:2%;width:96%;" placeholder="Clock Increment(0 - 60s)" value="{{ clock.increment }}"/>
+      <input id="clock.increment" class="vsComputerNav kui-input" type="tel" style="margin:2%;width:96%;" placeholder="Clock Increment(0 - 60s)" value="{{ clock.increment }}"/>
     </li>
     <li class="vsComputerNav" style="border-top:1px dashed #320374;font-size:12px;white-space:pre-wrap!important;word-break:break-word!important;">Days per move, for correspondence games. Clock settings must be omitted.</li>
     <li style="border-top:1px dashed #320374;">
-      <input id="days" class="vsComputerNav kui-input" type="number" style="margin:2%;width:96%;" placeholder="Days(1 - 15)" value="{{ days }}"/>
+      <input id="days" class="vsComputerNav kui-input" type="tel" style="margin:2%;width:96%;" placeholder="Days(1 - 15)" value="{{ days }}"/>
     </li>
     <li class="vsComputerNav" style="border-top:1px dashed #320374;" @click="submit()">
       <div class="kui-row-center" style="justify-content:space-around;">

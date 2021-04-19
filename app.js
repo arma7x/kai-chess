@@ -1149,6 +1149,165 @@ window.addEventListener("load", function() {
     }
   });
 
+  const vsHuman = new Kai({
+    name: 'vsHuman',
+    data: {
+      title: 'vsHuman',
+      isCancelable: false,
+      username: '',
+      rated: 'false',
+      'clock.limit': '',
+      'clock.increment': '',
+      days: '',
+      color: 'random',
+      variant: 'standard',
+      response: null
+    },
+    verticalNavClass: '.vsHumanNav',
+    templateUrl: document.location.origin + '/templates/vsHuman.html',
+    mounted: function() {
+      navigator.spatialNavigationEnabled = false;
+      this.$router.setHeaderTitle('VS Human');
+      if (LICHESS_API == null) {
+        return
+      }
+      window['chess_events'] = LICHESS_API.streamEvents(this.methods.onStream);
+    },
+    unmounted: function() {
+      this.data.isCancelable = false;
+      this.data.response = null;
+      window['chess_events'][1].abort();
+    },
+    methods: {
+      selected: function() {},
+      setRated: function() {
+        var menu = [
+          { "text": "false", "checked": false },
+          { "text": "true", "checked": false }
+        ];
+        const idx = menu.findIndex((opt) => {
+          return opt.text === this.data.rated;
+        });
+        this.$router.showSingleSelector('Rated', menu, 'Select', (selected) => {
+          this.setData({ rated: selected.text });
+        }, 'Cancel', null, undefined, idx);
+      },
+      setColor: function() {
+        var menu = [
+          { "text": "random", "checked": false },
+          { "text": "white", "checked": false },
+          { "text": "black", "checked": false }
+        ];
+        const idx = menu.findIndex((opt) => {
+          return opt.text === this.data.color;
+        });
+        this.$router.showSingleSelector('Color', menu, 'Select', (selected) => {
+          this.setData({ color: selected.text });
+        }, 'Cancel', null, undefined, idx);
+      },
+      setVariant: function() {
+        var menu = [
+          { "text": "standart", "checked": false },
+          { "text": "chess960", "checked": false },
+          { "text": "crazyhouse", "checked": false },
+          { "text": "antichess", "checked": false },
+          { "text": "atomic", "checked": false },
+          { "text": "horde", "checked": false },
+          { "text": "kingOfTheHill", "checked": false },
+          { "text": "racingKings", "checked": false },
+          { "text": "threeCheck", "checked": false }
+        ];
+        const idx = menu.findIndex((opt) => {
+          return opt.text === this.data.variant;
+        });
+        this.$router.showSingleSelector('Color', menu, 'Select', (selected) => {
+          this.setData({ variant: selected.text });
+        }, 'Cancel', null, undefined, idx);
+      },
+      submit: function() {
+        if (this.data.isCancelable) {
+          return
+        }
+        this.data.username = document.getElementById('username').value;
+        this.data['clock.limit'] = document.getElementById('clock.limit').value;
+        this.data['clock.increment'] = document.getElementById('clock.increment').value;
+        this.data['days'] = document.getElementById('days').value;
+        var opts = {
+          rated: JSON.parse(this.data.rated),
+          'clock.limit': this.data['clock.limit'],
+          'clock.increment': this.data['clock.increment'],
+          days: this.data.days,
+          color: this.data.color,
+          variant: this.data.variant
+        }
+        console.log(this.data.username, opts);
+        return
+        this.$router.showLoading();
+        if (LICHESS_API) {
+          LICHESS_API.createChallenge(this.data.username, opts)[0]
+          .then((res) => {
+            this.data.response = res.response;
+          })
+          .catch((e) => {
+            console.log(e);
+            this.data.isCancelable = false;
+          })
+          .finally(() => {
+            this.$router.hideLoading();
+          });
+        }
+      },
+      onStream: function(evt) {
+        var logs = parseNdJSON(evt);
+        console.log(logs);
+        logs.forEach((log) => {
+          if (log.type === 'gameStart') {
+            if (this.data.response) {
+              if (log.game.id === this.data.response.id) {
+                window['chess_events'][1].abort();
+                loadOnlineGame(this.$router, this.data.response.id, 'human', 'human', this.data.response.player, '', true);
+              }
+            }
+          }
+        });
+      }
+    },
+    softKeyText: { left: '', center: '', right: '' },
+    softKeyListener: {
+      left: function() {
+        if (!this.data.isCancelable) {
+          return
+        }
+        if (this.data.response) {
+          
+        }
+      },
+      center: function() {
+        const listNav = document.querySelectorAll(this.verticalNavClass);
+        if (this.verticalNavIndex > -1) {
+          if (listNav[this.verticalNavIndex]) {
+            listNav[this.verticalNavIndex].click();
+          }
+        }
+      },
+      right: function() {}
+    },
+    dPadNavListener: {
+      arrowUp: function() {
+        this.navigateListNav(-1);
+      },
+      arrowRight: function() {
+        //this.navigateTabNav(-1);
+      },
+      arrowDown: function() {
+        this.navigateListNav(1);
+      },
+      arrowLeft: function() {
+        //this.navigateTabNav(1);
+      },
+    }
+  });
+
   const homepage = new Kai({
     name: 'homepage',
     data: {
@@ -1196,6 +1355,7 @@ window.addEventListener("load", function() {
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
               { "text": "VS Computer" },
+              { "text": "VS Human" },
               { "text": "Find Options" },
               { "text": "Local Game" },
               { "text": "Saved Game" },
@@ -1212,6 +1372,8 @@ window.addEventListener("load", function() {
                 this.$router.push('onlineGames');
               } else if (selected.text === 'VS Computer') {
                 this.$router.push('vsComputer');
+              } else if (selected.text === 'VS Human') {
+                this.$router.push('vsHuman');
               } else if (selected.text === 'Load PGN') {
                 this.$router.push('pgnFiles');
               } else if (selected.text === 'Logout') {
@@ -1316,6 +1478,10 @@ window.addEventListener("load", function() {
       'vsComputer': {
         name: 'vsComputer',
         component: vsComputer
+      },
+      'vsHuman': {
+        name: 'vsHuman',
+        component: vsHuman
       }
     }
   });

@@ -51,6 +51,24 @@ const Lichess = (function() {
     return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/ai`, opts, {}, headers);
   }
 
+  Lichess.prototype.createChallenge = function(username, opts) {
+    var headers = JSON.parse(JSON.stringify(this.headers));
+    headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${username}`, opts, {}, headers);
+  }
+
+  Lichess.prototype.cancelChallenge = function(challengeId) {
+    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/cancel`, opts, {}, this.headers);
+  }
+
+  Lichess.prototype.acceptChallenge = function(challengeId) {
+    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/accept`, opts, {}, this.headers);
+  }
+
+  Lichess.prototype.declineChallenge = function(challengeId) {
+    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/decline`, opts, {}, this.headers);
+  }
+
   Lichess.xhr = function(method, url, data={}, query={}, headers={}, onStream=function(){}) {
     var xhttp = new XMLHttpRequest({ mozSystem: true });
     var prms = new Promise((resolve, reject) => {
