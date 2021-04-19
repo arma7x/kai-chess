@@ -1,0 +1,29 @@
+<div class="kui-flex-wrap">
+  <style>
+  .kui-row-center-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 100%;
+  }
+  </style>
+  <ul class="kui-list kai-container">
+    {{#games}}
+    <li class="onlineGamesNav" style="border-bottom:1px dashed #320374;" @click='selected()'>
+      <div class="kui-row-center kui-row-center-column">
+        <h5 style="font-weight:bold;white-space:pre-wrap!important;word-break:break-word!important;">{{ gameId }}</h5>
+        <div class="kui-row-center">
+          <small>{{ color }}</small>
+          <small>{{ variant.name }}</small>
+          <small>My Turn: {{ #isMyTurn }}Yes{{ /isMyTurn }}{{^isMyTurn}}No{{ /isMyTurn }}</small>
+        </div>
+        <div class="kui-row-center">
+          <small>VS {{ opponent.username }}</small>
+          <small>{{ perf }}</small>
+        </div>
+      </div>
+    </li>
+    {{/games}}
+  </ul>
+</span>

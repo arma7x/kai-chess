@@ -263,7 +263,7 @@ window.addEventListener("load", function() {
         var salt = window.crypto.getRandomValues(new Uint32Array(10))[0].toString();
         const hashids2 = new Hashids(salt, 15);
         const random = hashids2.encode(1);
-        createLocalGame(this.$router, random, this.data.p1.toLowerCase(), this.data.p2.toLowerCase(), this.data.pov.toLowerCase(), '');
+        loadLocalGame(this.$router, random, this.data.p1.toLowerCase(), this.data.p2.toLowerCase(), this.data.pov.toLowerCase(), '');
       }
     },
     softKeyInputFocusText: { left: '', center: '', right: '' },
@@ -293,17 +293,16 @@ window.addEventListener("load", function() {
     }
   });
 
-  const createLocalGame = function ($router, game_id, p1='human', p2='human', pov='white', pgn='', local_game = true) {
+  const loadLocalGame = function ($router, game_id, p1='human', p2='human', pov='white', pgn='', local_game = true) {
     var HISTORY = [];
     $router.push(
       new Kai({
-        name: 'createLocalGame',
+        name: 'loadLocalGame',
         data: {
-          title: 'createLocalGame',
+          title: 'loadLocalGame',
           counter: -1,
         },
-        verticalNavClass: '.createOfflineGameNav',
-        templateUrl: document.location.origin + '/templates/createLocalGame.html',
+        templateUrl: document.location.origin + '/templates/loadLocalGame.html',
         mounted: function() {
           navigator.spatialNavigationEnabled = false;
           var listener = {
@@ -520,7 +519,7 @@ window.addEventListener("load", function() {
     );
   }
 
-  const createOnlineGame = function ($router, game_id, p1='human', p2='human', pov='white', fen='', local_game = true) {
+  const loadOnlineGame = function ($router, game_id, p1='human', p2='human', pov='white', fen='', local_game = true) {
 
     var GAME_INIT = true;
     var DRAW_OFFER = false;
@@ -528,14 +527,13 @@ window.addEventListener("load", function() {
 
     $router.push(
       new Kai({
-        name: 'createOnlineGame',
+        name: 'loadOnlineGame',
         data: {
-          title: 'createOnlineGame',
+          title: 'loadOnlineGame',
           counter: -1,
           mvs: 0
         },
-        verticalNavClass: '.createOfflineGameNav',
-        templateUrl: document.location.origin + '/templates/createLocalGame.html',
+        templateUrl: document.location.origin + '/templates/loadLocalGame.html',
         mounted: function() {
           navigator.spatialNavigationEnabled = false;
           var listener = {
@@ -722,7 +720,7 @@ window.addEventListener("load", function() {
             if (GAME_STATUS) {
               menu.push({ "text": "Resign" });
             }
-            if (GAME_STATUS) {
+            if (GAME_STATUS && window['chess'].GAME.moves().length === 0) {
               menu.push({ "text": "Abort" });
             }
             this.$router.showOptionMenu('Menu', menu, 'Select', (selected) => {
@@ -752,6 +750,10 @@ window.addEventListener("load", function() {
             }
             if (window['chess'].getFocus()) {
               var toMove = `${window['chess'].getFocusPoint()}${window['chess'].getPosition(window['chess'].getMove()).dataset.square}`;
+              if (!window['chess'].GAME.move(toMove, { sloppy: true })) {
+                return
+              }
+              window['chess'].GAME.undo();
               this.$router.showLoading();
               LICHESS_API.makeBoardmove(game_id, toMove)[0]
               .finally(() => {
@@ -883,12 +885,86 @@ window.addEventListener("load", function() {
           window['__DS__'].getFile(pgn.path, (found) => {
             var fr = new FileReader();
             fr.onload = (event) => {
-              createLocalGame(this.$router, pgn.name, 'human', 'human', 'white', event.target.result, false);
+              loadLocalGame(this.$router, pgn.name, 'human', 'human', 'white', event.target.result, false);
             };
             fr.readAsText(found);
           }, (notfound) => {
             console.log(notfound);
           });
+        }
+      },
+      right: function() {}
+    },
+    dPadNavListener: {
+      arrowUp: function() {
+        this.navigateListNav(-1);
+      },
+      arrowRight: function() {
+        //this.navigateTabNav(-1);
+      },
+      arrowDown: function() {
+        this.navigateListNav(1);
+      },
+      arrowLeft: function() {
+        //this.navigateTabNav(1);
+      },
+    },
+    backKeyListener: function() {
+      this.components = [];
+    }
+  });
+
+  const onlineGames = new Kai({
+    name: 'onlineGames',
+    data: {
+      title: 'onlineGames',
+      counter: -1,
+      games: []
+    },
+    verticalNavClass: '.onlineGamesNav',
+    templateUrl: document.location.origin + '/templates/onlineGames.html',
+    mounted: function() {
+      navigator.spatialNavigationEnabled = false;
+      this.$router.setHeaderTitle('Ongoing Games');
+      this.methods.refresh();
+    },
+    unmounted: function() {
+      this.data.games = []
+    },
+    methods: {
+      selected: function() {},
+      refresh: function() {
+        if (LICHESS_API == null) {
+          return
+        }
+        this.$router.showLoading();
+        LICHESS_API.getOngoingGames()[0]
+        .then((r) => {
+          if (r.response.nowPlaying.length > 0) {
+            this.setData({games: r.response.nowPlaying});
+            this.$router.setSoftKeyCenterText('SELECT');
+          } else {
+            this.setData({games: []});
+            this.$router.setSoftKeyCenterText('');
+          }
+        })
+        .catch(e => {
+          console.log(e);
+        })
+        .finally(() => {
+          this.$router.hideLoading();
+        })
+      }
+    },
+    softKeyText: { left: 'Refresh', center: '', right: '' },
+    softKeyListener: {
+      left: function() {
+        this.methods.refresh();
+      },
+      center: function() {
+        var game = this.data.games[this.verticalNavIndex];
+        if (game) {
+          loadOnlineGame(this.$router, game.gameId, 'human', 'human', game.color, '', true);
         }
       },
       right: function() {}
@@ -922,7 +998,6 @@ window.addEventListener("load", function() {
       empty: true,
       LICHESS_ACCESS_TOKEN: null
     },
-    verticalNavClass: '.homepageNav',
     templateUrl: document.location.origin + '/templates/homepage.html',
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
@@ -959,17 +1034,16 @@ window.addEventListener("load", function() {
             { "text": "Login Lichess" },
             { "text": "Local Game" },
             { "text": "Saved Game" },
-            { "text": "Load PGN" },
-            { "text": "Load FEN" }
+            { "text": "Load PGN" }
           ];
           if (res) {
             menu = [
               { "text": "Help & Support" },
-              { "text": "Resume Game" },
+              { "text": "Ongoing Games" },
+              { "text": "Challenges" },
               { "text": "Local Game" },
               { "text": "Saved Game" },
               { "text": "Load PGN" },
-              { "text": "Load FEN" },
               { "text": "Logout" }
             ];
             LICHESS_API = new Lichess(res.access_token);
@@ -978,18 +1052,8 @@ window.addEventListener("load", function() {
             setTimeout(() => {
               if (selected.text === 'Login Lichess') {
                 loginPage(this.$router);
-              } else if (selected.text === 'Resume Game') {
-                LICHESS_API.getOngoingGames()[0]
-                .then((r) => {
-                  if (r.response.nowPlaying.length > 0) {
-                    var g = r.response.nowPlaying[0];
-                    // console.log(g);
-                    createOnlineGame(this.$router, g.gameId, 'human', 'human', g.color, '', true);
-                  }
-                })
-                .catch(e => {
-                  console.log(e);
-                })
+              } else if (selected.text === 'Ongoing Games') {
+                this.$router.push('onlineGames');
               } else if (selected.text === 'Load PGN') {
                 this.$router.push('pgnFiles');
               } else if (selected.text === 'Logout') {
@@ -1086,6 +1150,10 @@ window.addEventListener("load", function() {
       'pgnFiles': {
         name: 'pgnFiles',
         component: pgnFiles
+      },
+      'onlineGames': {
+        name: 'onlineGames',
+        component: onlineGames
       }
     }
   });
