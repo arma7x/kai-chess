@@ -45,6 +45,12 @@ const Lichess = (function() {
     return Lichess.xhr(`POST`, `https://lichess.org/api/board/game/${gameId}/draw/${accept}`, {}, {}, this.headers);
   }
 
+  Lichess.prototype.challengeAI = function(opts) {
+    var headers = JSON.parse(JSON.stringify(this.headers));
+    headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/ai`, opts, {}, headers);
+  }
+
   Lichess.xhr = function(method, url, data={}, query={}, headers={}, onStream=function(){}) {
     var xhttp = new XMLHttpRequest({ mozSystem: true });
     var prms = new Promise((resolve, reject) => {
@@ -79,7 +85,14 @@ const Lichess = (function() {
         xhttp.setRequestHeader(x, headers[x]);
       }
       if (Object.keys(data).length > 0) {
-        xhttp.send(JSON.stringify(data));
+        var formBody = [];
+        for (var property in data) {
+          var encodedKey = encodeURIComponent(property);
+          var encodedValue = encodeURIComponent(data[property]);
+          formBody.push(encodedKey + "=" + encodedValue);
+        }
+        formBody = formBody.join("&");
+        xhttp.send(formBody);
       } else {
         xhttp.send();
       }

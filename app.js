@@ -8,7 +8,14 @@ window.addEventListener("load", function() {
   var LICHESS_API = null;
 
   const state = new KaiState({
-    'TODOIST_SYNC': {},
+    'SEEK_OPTIONS': {
+      rated: false,
+      time: 180,
+      increment: 180,
+      variant: 'standard',
+      color: 'random',
+      ratingRange: ''
+    },
   });
 
   const parseNdJSON = (jsonString) => {
@@ -299,8 +306,7 @@ window.addEventListener("load", function() {
       new Kai({
         name: 'loadLocalGame',
         data: {
-          title: 'loadLocalGame',
-          counter: -1,
+          title: 'loadLocalGame'
         },
         templateUrl: document.location.origin + '/templates/loadLocalGame.html',
         mounted: function() {
@@ -530,7 +536,6 @@ window.addEventListener("load", function() {
         name: 'loadOnlineGame',
         data: {
           title: 'loadOnlineGame',
-          counter: -1,
           mvs: 0
         },
         templateUrl: document.location.origin + '/templates/loadLocalGame.html',
@@ -838,7 +843,6 @@ window.addEventListener("load", function() {
     name: 'pgnFiles',
     data: {
       title: 'pgnFiles',
-      counter: -1,
       pgns: []
     },
     verticalNavClass: '.pgnFilesNav',
@@ -920,7 +924,6 @@ window.addEventListener("load", function() {
     name: 'onlineGames',
     data: {
       title: 'onlineGames',
-      counter: -1,
       games: []
     },
     verticalNavClass: '.onlineGamesNav',
@@ -990,6 +993,162 @@ window.addEventListener("load", function() {
     }
   });
 
+  const vsComputer = new Kai({
+    name: 'vsComputer',
+    data: {
+      title: 'vsComputer',
+      isSeek: false,
+      level: '1',
+      'clock.limit': '',
+      'clock.increment': '',
+      days: '',
+      color: 'random',
+      variant: 'standard',
+      response: null
+    },
+    verticalNavClass: '.vsComputerNav',
+    templateUrl: document.location.origin + '/templates/vsComputer.html',
+    mounted: function() {
+      navigator.spatialNavigationEnabled = false;
+      this.$router.setHeaderTitle('VS Computer');
+      if (LICHESS_API == null) {
+        return
+      }
+      window['chess_events'] = LICHESS_API.streamEvents(this.methods.onStream);
+    },
+    unmounted: function() {
+      this.data.isSeek = false;
+      this.data.response = null;
+      window['chess_events'][1].abort();
+    },
+    methods: {
+      selected: function() {},
+      setLevel: function() {
+        var menu = [
+          { "text": "1", "checked": false },
+          { "text": "2", "checked": false },
+          { "text": "3", "checked": false },
+          { "text": "4", "checked": false },
+          { "text": "5", "checked": false },
+          { "text": "6", "checked": false },
+          { "text": "7", "checked": false },
+          { "text": "8", "checked": false }
+        ];
+        const idx = menu.findIndex((opt) => {
+          return opt.text === this.data.level;
+        });
+        this.$router.showSingleSelector('Level', menu, 'Select', (selected) => {
+          this.setData({ level: selected.text });
+        }, 'Cancel', null, undefined, idx);
+      },
+      setColor: function() {
+        var menu = [
+          { "text": "random", "checked": false },
+          { "text": "white", "checked": false },
+          { "text": "black", "checked": false }
+        ];
+        const idx = menu.findIndex((opt) => {
+          return opt.text === this.data.color;
+        });
+        this.$router.showSingleSelector('Color', menu, 'Select', (selected) => {
+          this.setData({ color: selected.text });
+        }, 'Cancel', null, undefined, idx);
+      },
+      setVariant: function() {
+        var menu = [
+          { "text": "standart", "checked": false },
+          { "text": "chess960", "checked": false },
+          { "text": "crazyhouse", "checked": false },
+          { "text": "antichess", "checked": false },
+          { "text": "atomic", "checked": false },
+          { "text": "horde", "checked": false },
+          { "text": "kingOfTheHill", "checked": false },
+          { "text": "racingKings", "checked": false },
+          { "text": "threeCheck", "checked": false }
+        ];
+        const idx = menu.findIndex((opt) => {
+          return opt.text === this.data.variant;
+        });
+        this.$router.showSingleSelector('Color', menu, 'Select', (selected) => {
+          this.setData({ variant: selected.text });
+        }, 'Cancel', null, undefined, idx);
+      },
+      submit: function() {
+        if (this.data.isSeek) {
+          return
+        }
+        this.data['clock.limit'] = document.getElementById('clock.limit').value;
+        this.data['clock.increment'] = document.getElementById('clock.increment').value;
+        this.data['days'] = document.getElementById('days').value;
+        var opts = {
+          level: this.data.level,
+          'clock.limit': this.data['clock.limit'],
+          'clock.increment': this.data['clock.increment'],
+          days: this.data.days,
+          color: this.data.color,
+          variant: this.data.variant
+        }
+        console.log(opts);
+        this.data.isSeek = true;
+        this.$router.showLoading();
+        if (LICHESS_API) {
+          LICHESS_API.challengeAI(opts)[0]
+          .then((res) => {
+            this.data.response = res.response;
+          })
+          .catch((e) => {
+            console.log(e);
+          })
+          .finally(() => {
+            this.data.isSeek = false;
+            this.$router.hideLoading();
+          });
+        }
+      },
+      onStream: function(evt) {
+        var logs = parseNdJSON(evt);
+        logs.forEach((log) => {
+          if (log.type === 'gameStart') {
+            if (this.data.response) {
+              if (log.game.id === this.data.response.id) {
+                window['chess_events'][1].abort();
+                loadOnlineGame(this.$router, this.data.response.id, 'human', 'human', this.data.response.player, '', true);
+              }
+            }
+          }
+        });
+      }
+    },
+    softKeyText: { left: '', center: '', right: '' },
+    softKeyListener: {
+      left: function() {
+      },
+      center: function() {
+        const listNav = document.querySelectorAll(this.verticalNavClass);
+        if (this.verticalNavIndex > -1) {
+          if (listNav[this.verticalNavIndex]) {
+            listNav[this.verticalNavIndex].click();
+          }
+        }
+      },
+      right: function() {}
+    },
+    dPadNavListener: {
+      arrowUp: function() {
+        this.navigateListNav(-1);
+      },
+      arrowRight: function() {
+        //this.navigateTabNav(-1);
+      },
+      arrowDown: function() {
+        this.navigateListNav(1);
+      },
+      arrowLeft: function() {
+        //this.navigateTabNav(1);
+      },
+    }
+  });
+
   const homepage = new Kai({
     name: 'homepage',
     data: {
@@ -1004,15 +1163,9 @@ window.addEventListener("load", function() {
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
       this.$router.setHeaderTitle('K-Chess');
-      this.$state.addStateListener('TODOIST_SYNC', this.methods.listenStateSync);
     },
-    unmounted: function() {
-      this.$state.removeStateListener('TODOIST_SYNC', this.methods.listenStateSync);
-    },
+    unmounted: function() {},
     methods: {
-      listenStateSync: function(data) {
-        this.setData({ projects: projects, empty: (projects.length === 0 ? true : false) });
-      },
       toggleSoftKeyText: function() {
         setTimeout(() => {
           if (!this.$router.bottomSheet) {
@@ -1042,7 +1195,8 @@ window.addEventListener("load", function() {
             menu = [
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
-              { "text": "Challenges" },
+              { "text": "VS Computer" },
+              { "text": "Find Options" },
               { "text": "Local Game" },
               { "text": "Saved Game" },
               { "text": "Load PGN" },
@@ -1056,6 +1210,8 @@ window.addEventListener("load", function() {
                 loginPage(this.$router);
               } else if (selected.text === 'Ongoing Games') {
                 this.$router.push('onlineGames');
+              } else if (selected.text === 'VS Computer') {
+                this.$router.push('vsComputer');
               } else if (selected.text === 'Load PGN') {
                 this.$router.push('pgnFiles');
               } else if (selected.text === 'Logout') {
@@ -1156,6 +1312,10 @@ window.addEventListener("load", function() {
       'onlineGames': {
         name: 'onlineGames',
         component: onlineGames
+      },
+      'vsComputer': {
+        name: 'vsComputer',
+        component: vsComputer
       }
     }
   });
