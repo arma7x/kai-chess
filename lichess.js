@@ -21,10 +21,6 @@ const Lichess = (function() {
     return Lichess.xhr(`GET`, `https://lichess.org/api/stream/event`, {}, {}, this.headers, onStream);
   }
 
-  Lichess.prototype.createSeek = function(opts) {
-    return Lichess.xhr(`POST`, `https://lichess.org/api/board/seek`, opts, {}, this.headers);
-  }
-
   Lichess.prototype.streamBoardState = function(gameId, onStream = function(){}) {
     return Lichess.xhr(`GET`, `https://lichess.org/api/board/game/stream/${gameId}`, {}, {}, this.headers, onStream);
   }
@@ -43,6 +39,12 @@ const Lichess = (function() {
 
   Lichess.prototype.handleDrawOffers = function(gameId, accept) {
     return Lichess.xhr(`POST`, `https://lichess.org/api/board/game/${gameId}/draw/${accept}`, {}, {}, this.headers);
+  }
+
+  Lichess.prototype.seekChallenge = function(opts, onStream = function(){}) {
+    var headers = JSON.parse(JSON.stringify(this.headers));
+    headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+    return Lichess.xhr(`POST`, `https://lichess.org/api/board/seek`, opts, {}, headers);
   }
 
   Lichess.prototype.challengeAI = function(opts) {
