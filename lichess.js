@@ -58,15 +58,15 @@ const Lichess = (function() {
   }
 
   Lichess.prototype.cancelChallenge = function(challengeId) {
-    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/cancel`, opts, {}, this.headers);
+    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/cancel`, {}, {}, this.headers);
   }
 
   Lichess.prototype.acceptChallenge = function(challengeId) {
-    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/accept`, opts, {}, this.headers);
+    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/accept`, {}, {}, this.headers);
   }
 
   Lichess.prototype.declineChallenge = function(challengeId) {
-    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/decline`, opts, {}, this.headers);
+    return Lichess.xhr(`POST`, `https://lichess.org/api/challenge/${challengeId}/decline`, {}, {}, this.headers);
   }
 
   Lichess.xhr = function(method, url, data={}, query={}, headers={}, onStream=function(){}) {

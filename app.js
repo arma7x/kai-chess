@@ -527,6 +527,55 @@ window.addEventListener("load", function() {
 
   const loadOnlineGame = function ($router, game_id, p1='human', p2='human', pov='white', fen='', local_game = true) {
 
+    var listener = {
+      onGameOver: function() {
+        var s = document.getElementById('game-status')
+        if (window['chess_lichess'].GAME.in_stalemate()) {
+          s.innerText = 'Stalemate'
+        }
+        if (window['chess_lichess'].GAME.in_draw()) {
+          s.innerText = 'Draw'
+        }
+        if (window['chess_lichess'].GAME.in_threefold_repetition()) {
+          s.innerText = 'Threefold Repetition'
+        }
+        if (window['chess_lichess'].GAME.in_checkmate()) {
+          s.innerText = 'White Win'
+          if (window['chess_lichess'].GAME.turn() === 'w') {
+            s.innerText = 'Black Win'
+          }
+        }
+      },
+      onCheck: function() {
+        var s = document.getElementById('game-status')
+        s.innerText = 'Check'
+      },
+      onTurn: function(color) {
+        var p = document.getElementById('player-turn')
+        p.innerText = 'White'
+        if (color === 'b') {
+          p.innerText = 'Black'
+        }
+        var s = document.getElementById('game-status')
+        s.innerText = 'In Progress'
+        if (local_game && window['chess_lichess'] != null) {
+          var _H = window['chess_lichess'].GAME.history({ verbose: true });
+          var c = _H.length - 1;
+          if (_H[c]) {
+            var from = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c].from))
+            var to = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c].to))
+            from.classList.add('h-select-cursor');
+            to.classList.add('h-select-cursor');
+            if (_H[c - 1]) {
+              var from = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c - 1].from))
+              var to = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c - 1].to))
+              from.classList.remove('h-select-cursor');
+              to.classList.remove('h-select-cursor');
+            }
+          }
+        }
+      }
+    }
     var GAME_INIT = true;
     var DRAW_OFFER = false;
     var GAME_STATUS = true;
@@ -541,113 +590,70 @@ window.addEventListener("load", function() {
         templateUrl: document.location.origin + '/templates/loadLocalGame.html',
         mounted: function() {
           navigator.spatialNavigationEnabled = false;
-          var listener = {
-            onGameOver: function() {
-              var s = document.getElementById('game-status')
-              if (window['chess'].GAME.in_stalemate()) {
-                s.innerText = 'Stalemate'
-              }
-              if (window['chess'].GAME.in_draw()) {
-                s.innerText = 'Draw'
-              }
-              if (window['chess'].GAME.in_threefold_repetition()) {
-                s.innerText = 'Threefold Repetition'
-              }
-              if (window['chess'].GAME.in_checkmate()) {
-                s.innerText = 'White Win'
-                if (window['chess'].GAME.turn() === 'w') {
-                  s.innerText = 'Black Win'
-                }
-              }
-            },
-            onCheck: function() {
-              var s = document.getElementById('game-status')
-              s.innerText = 'Check'
-            },
-            onTurn: function(color) {
-              var p = document.getElementById('player-turn')
-              p.innerText = 'White'
-              if (color === 'b') {
-                p.innerText = 'Black'
-              }
-              var s = document.getElementById('game-status')
-              s.innerText = 'In Progress'
-              if (local_game && window['chess'] != null) {
-                var _H = window['chess'].GAME.history({ verbose: true });
-                var c = _H.length - 1;
-                if (_H[c]) {
-                  var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].from))
-                  var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].to))
-                  from.classList.add('h-select-cursor');
-                  to.classList.add('h-select-cursor');
-                  if (_H[c - 1]) {
-                    var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c - 1].from))
-                    var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c - 1].to))
-                    from.classList.remove('h-select-cursor');
-                    to.classList.remove('h-select-cursor');
-                  }
-                }
-              }
-            }
-          }
-          window['chess'] = createChessGame(p1, p2, pov, 'container', listener);
-          window['chess'].loadFEN(fen);
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '0px'
           window['chess_stream'] = LICHESS_API.streamBoardState(game_id, this.methods.onStream)
         },
         unmounted: function() {
-          window['chess'].WORKER.terminate()
+          window['chess_lichess'].WORKER.terminate()
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '28px'
-          window['chess'] = null
+          window['chess_lichess'] = null
           window['chess_stream'][1].abort();
         },
         methods: {
           onStream: function(evt) {
             var logs = parseNdJSON(evt);
-            console.log(logs);
             if (logs.length === 1 && GAME_INIT) {
               k = logs[0];
-              if (k.state.moves !== '') {
-                var mvs = k.state.moves.split(' ');
-                mvs.forEach(m => {
-                  window['chess'].GAME.move(m, { sloppy: true })
-                })
-                window['chess'].updateGame();
-                this.data.mvs = mvs.length;
-                var _draw = 'wdraw'
-                if (pov == 'white') {
-                  _draw = 'bdraw'
+              localforage.getItem('LICHESS_USER')
+              .then((u) => {
+                pov = 'black';
+                if (k.white.id === u.id) {
+                  pov = 'white';
                 }
-                DRAW_OFFER = k.state[_draw];
-                if (DRAW_OFFER) {
-                  this.$router.setSoftKeyRightText('ACCEPT');
-                } else {
-                  this.$router.setSoftKeyRightText('');
+                window['chess_lichess'] = createChessGame(p1, p2, pov, 'container', listener);
+                window['chess_lichess'].loadFEN(fen);
+                if (k.state.moves !== '') {
+                  var mvs = k.state.moves.split(' ');
+                  mvs.forEach(m => {
+                    window['chess_lichess'].GAME.move(m, { sloppy: true })
+                  })
+                  window['chess_lichess'].updateGame();
+                  this.data.mvs = mvs.length;
+                  var _draw = 'wdraw'
+                  if (pov == 'white') {
+                    _draw = 'bdraw'
+                  }
+                  DRAW_OFFER = k.state[_draw];
+                  if (DRAW_OFFER) {
+                    this.$router.setSoftKeyRightText('ACCEPT');
+                  } else {
+                    this.$router.setSoftKeyRightText('');
+                  }
                 }
                 GAME_INIT = false;
-              }
+              });
             }
-            if (logs.length > 1) {
+            if (logs.length > 1 && !GAME_INIT) {
               if (logs[logs.length - 1].type === 'gameState') {
                 var log = logs[logs.length - 1];
                 var mvs = log.moves.split(' ');
                 if (this.data.mvs === 0 && log.status === 'started') {
-                  window['chess'].GAME.move(mvs[0], { sloppy: true });
-                  window['chess'].resetCursor();
-                  var h = window['chess'].GAME.history({ verbose: true })
+                  window['chess_lichess'].GAME.move(mvs[0], { sloppy: true });
+                  window['chess_lichess'].resetCursor();
+                  var h = window['chess_lichess'].GAME.history({ verbose: true })
                   if (h.length > 0) {
-                    window['chess'].playSound(h[h.length - 1].flags);
+                    window['chess_lichess'].playSound(h[h.length - 1].flags);
                   }
                 }
                 if (mvs.length > this.data.mvs) {
-                  window['chess'].GAME.move(mvs[mvs.length - 1], { sloppy: true });
-                  window['chess'].updateGame();
-                  window['chess'].resetCursor();
-                  var h = window['chess'].GAME.history({ verbose: true })
+                  window['chess_lichess'].GAME.move(mvs[mvs.length - 1], { sloppy: true });
+                  window['chess_lichess'].updateGame();
+                  window['chess_lichess'].resetCursor();
+                  var h = window['chess_lichess'].GAME.history({ verbose: true })
                   if (h.length > 0) {
-                    window['chess'].playSound(h[h.length - 1].flags);
+                    window['chess_lichess'].playSound(h[h.length - 1].flags);
                   }
                   this.data.mvs = mvs.length;
                 }
@@ -727,7 +733,7 @@ window.addEventListener("load", function() {
             if (GAME_STATUS) {
               menu.push({ "text": "Resign" });
             }
-            if (GAME_STATUS && window['chess'].GAME.moves().length === 0) {
+            if (GAME_STATUS && window['chess_lichess'].GAME.moves().length === 0) {
               menu.push({ "text": "Abort" });
             }
             this.$router.showOptionMenu('Menu', menu, 'Select', (selected) => {
@@ -752,24 +758,24 @@ window.addEventListener("load", function() {
             if (!GAME_STATUS) {
               return
             }
-            if (!local_game && pov[0] !== window['chess'].GAME.turn()) {
+            if (!local_game && pov[0] !== window['chess_lichess'].GAME.turn()) {
               return
             }
-            if (window['chess'].getFocus()) {
-              var toMove = `${window['chess'].getFocusPoint()}${window['chess'].getPosition(window['chess'].getMove()).dataset.square}`;
-              if (!window['chess'].GAME.move(toMove, { sloppy: true })) {
+            if (window['chess_lichess'].getFocus()) {
+              var toMove = `${window['chess_lichess'].getFocusPoint()}${window['chess_lichess'].getPosition(window['chess_lichess'].getMove()).dataset.square}`;
+              if (!window['chess_lichess'].GAME.move(toMove, { sloppy: true })) {
                 return
               }
-              window['chess'].GAME.undo();
+              window['chess_lichess'].GAME.undo();
               this.$router.showLoading();
               LICHESS_API.makeBoardmove(game_id, toMove)[0]
               .finally(() => {
                 this.$router.hideLoading();
-                window['chess'].resetCursor();
+                window['chess_lichess'].resetCursor();
               });
               return
             }
-            window['chess'].enter()
+            window['chess_lichess'].enter()
           },
           right: function() {
             if (DRAW_OFFER) {
@@ -796,38 +802,38 @@ window.addEventListener("load", function() {
             if (!GAME_STATUS) {
               return
             }
-            if (local_game && pov[0] === window['chess'].GAME.turn()) {
-              window['chess'].arrowUp()
+            if (local_game && pov[0] === window['chess_lichess'].GAME.turn()) {
+              window['chess_lichess'].arrowUp()
             }
           },
           arrowRight: function() {
             if (!GAME_STATUS) {
               return
             }
-            if (local_game && pov[0] === window['chess'].GAME.turn()) {
-              window['chess'].arrowRight()
+            if (local_game && pov[0] === window['chess_lichess'].GAME.turn()) {
+              window['chess_lichess'].arrowRight()
             }
           },
           arrowDown: function() {
             if (!GAME_STATUS) {
               return
             }
-            if (local_game && pov[0] === window['chess'].GAME.turn()) {
-              window['chess'].arrowDown()
+            if (local_game && pov[0] === window['chess_lichess'].GAME.turn()) {
+              window['chess_lichess'].arrowDown()
             }
           },
           arrowLeft: function() {
             if (!GAME_STATUS) {
               return
             }
-            if (local_game && pov[0] === window['chess'].GAME.turn()) {
-              window['chess'].arrowLeft()
+            if (local_game && pov[0] === window['chess_lichess'].GAME.turn()) {
+              window['chess_lichess'].arrowLeft()
             }
           },
         },
         backKeyListener: function() {
-          if (window['chess'].getFocus()) {
-            window['chess'].resetCursor();
+          if (window['chess_lichess'].getFocus()) {
+            window['chess_lichess'].resetCursor();
             return true;
           }
           this.$router.showDialog('Confirm', 'Are you sure to exit the game ?', null, 'Yes', () => {
@@ -1098,10 +1104,8 @@ window.addEventListener("load", function() {
           })
           .catch((e) => {
             console.log(e);
-          })
-          .finally(() => {
-            this.data.isSeek = false;
             this.$router.hideLoading();
+            this.data.isSeek = false;
           });
         }
       },
@@ -1111,8 +1115,19 @@ window.addEventListener("load", function() {
           if (log.type === 'gameStart') {
             if (this.data.response) {
               if (log.game.id === this.data.response.id) {
+                this.$router.showToast(log.type);
                 window['chess_events'][1].abort();
+                this.$router.hideLoading();
+                this.data.isSeek = false;
                 loadOnlineGame(this.$router, this.data.response.id, 'human', 'human', this.data.response.player, '', true);
+              }
+            }
+          } else if (log.type === 'challengeDeclined' || log.type === 'challengeCanceled') {
+            if (this.data.response) {
+              if (log.game.id === this.data.response.id) {
+                this.$router.showToast(log.type);
+                this.data.isSeek = false;
+                this.data.response = null;
               }
             }
           }
@@ -1153,7 +1168,7 @@ window.addEventListener("load", function() {
     name: 'vsHuman',
     data: {
       title: 'vsHuman',
-      isCancelable: false,
+      isPending: false,
       username: '',
       rated: 'false',
       'clock.limit': '',
@@ -1167,14 +1182,14 @@ window.addEventListener("load", function() {
     templateUrl: document.location.origin + '/templates/vsHuman.html',
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
-      this.$router.setHeaderTitle('VS Human');
+      this.$router.setHeaderTitle('Send Challenge');
       if (LICHESS_API == null) {
         return
       }
       window['chess_events'] = LICHESS_API.streamEvents(this.methods.onStream);
     },
     unmounted: function() {
-      this.data.isCancelable = false;
+      this.data.isPending = false;
       this.data.response = null;
       window['chess_events'][1].abort();
     },
@@ -1225,7 +1240,7 @@ window.addEventListener("load", function() {
         }, 'Cancel', null, undefined, idx);
       },
       submit: function() {
-        if (this.data.isCancelable) {
+        if (this.data.isPending) {
           return
         }
         this.data.username = document.getElementById('username').value;
@@ -1241,16 +1256,17 @@ window.addEventListener("load", function() {
           variant: this.data.variant
         }
         console.log(this.data.username, opts);
-        return
         this.$router.showLoading();
         if (LICHESS_API) {
           LICHESS_API.createChallenge(this.data.username, opts)[0]
           .then((res) => {
             this.data.response = res.response;
+            this.data.isPending = true;
+            this.$router.setSoftKeyLeftText('Cancel');
           })
           .catch((e) => {
             console.log(e);
-            this.data.isCancelable = false;
+            this.$router.showToast('Error');
           })
           .finally(() => {
             this.$router.hideLoading();
@@ -1259,13 +1275,23 @@ window.addEventListener("load", function() {
       },
       onStream: function(evt) {
         var logs = parseNdJSON(evt);
-        console.log(logs);
         logs.forEach((log) => {
           if (log.type === 'gameStart') {
             if (this.data.response) {
-              if (log.game.id === this.data.response.id) {
+              if (log.game.id === this.data.response.challenge.id) {
+                this.$router.setSoftKeyLeftText('');
+                this.$router.showToast(log.type);
                 window['chess_events'][1].abort();
                 loadOnlineGame(this.$router, this.data.response.id, 'human', 'human', this.data.response.player, '', true);
+              }
+            }
+          } else if (log.type === 'challengeDeclined' || log.type === 'challengeCanceled') {
+            if (this.data.response) {
+              if (log.challenge.id === this.data.response.challenge.id) {
+                this.$router.showToast(log.type);
+                this.data.isPending = false;
+                this.data.response = null;
+                this.$router.setSoftKeyLeftText('');
               }
             }
           }
@@ -1275,11 +1301,15 @@ window.addEventListener("load", function() {
     softKeyText: { left: '', center: '', right: '' },
     softKeyListener: {
       left: function() {
-        if (!this.data.isCancelable) {
+        if (!this.data.isPending) {
           return
         }
         if (this.data.response) {
-          
+          this.$router.showLoading();
+          LICHESS_API.cancelChallenge(this.data.response.challenge.id)[0]
+          .finally(() => {
+            this.$router.hideLoading();
+          });
         }
       },
       center: function() {
@@ -1295,12 +1325,22 @@ window.addEventListener("load", function() {
     dPadNavListener: {
       arrowUp: function() {
         this.navigateListNav(-1);
+        if (this.data.isPending) {
+          this.$router.setSoftKeyLeftText('Cancel');
+        } else {
+          this.$router.setSoftKeyLeftText('');
+        }
       },
       arrowRight: function() {
         //this.navigateTabNav(-1);
       },
       arrowDown: function() {
         this.navigateListNav(1);
+        if (this.data.isPending) {
+          this.$router.setSoftKeyLeftText('Cancel');
+        } else {
+          this.$router.setSoftKeyLeftText('');
+        }
       },
       arrowLeft: function() {
         //this.navigateTabNav(1);
@@ -1354,15 +1394,18 @@ window.addEventListener("load", function() {
             menu = [
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
+              { "text": "Send Challenge" },
               { "text": "VS Computer" },
-              { "text": "VS Human" },
-              { "text": "Find Options" },
               { "text": "Local Game" },
               { "text": "Saved Game" },
               { "text": "Load PGN" },
               { "text": "Logout" }
             ];
             LICHESS_API = new Lichess(res.access_token);
+            LICHESS_API.me()[0]
+            .then((d) => {
+              localforage.setItem('LICHESS_USER', d.response);
+            });
           }
           this.$router.showOptionMenu(title, menu, 'Select', (selected) => {
             setTimeout(() => {
@@ -1372,7 +1415,7 @@ window.addEventListener("load", function() {
                 this.$router.push('onlineGames');
               } else if (selected.text === 'VS Computer') {
                 this.$router.push('vsComputer');
-              } else if (selected.text === 'VS Human') {
+              } else if (selected.text === 'Send Challenge') {
                 this.$router.push('vsHuman');
               } else if (selected.text === 'Load PGN') {
                 this.$router.push('pgnFiles');
