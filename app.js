@@ -339,16 +339,16 @@ window.addEventListener("load", function() {
                 var _H = window['chess'].GAME.history({ verbose: true });
                 var c = _H.length - 1;
                 if (_H[c]) {
-                  var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].from))
-                  var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].to))
-                  from.classList.add('h-select-cursor');
-                  to.classList.add('h-select-cursor');
                   if (_H[c - 1]) {
                     var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c - 1].from))
                     var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c - 1].to))
                     from.classList.remove('h-select-cursor');
                     to.classList.remove('h-select-cursor');
                   }
+                  var from = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].from))
+                  var to = window['chess'].getPosition(window['chess'].getMoveDOM(_H[c].to))
+                  from.classList.add('h-select-cursor');
+                  to.classList.add('h-select-cursor');
                 }
               }
             }
@@ -385,18 +385,12 @@ window.addEventListener("load", function() {
           reset: function() {},
           plus: function() {},
         },
-        softKeyText: { left: local_game ? 'Menu' : '', center: local_game ? 'MOVE' : '', right: local_game ? 'Undo' : '' },
+        softKeyText: { left: '', center: local_game ? 'MOVE' : '', right: local_game ? 'Undo' : '' },
         softKeyListener: {
           left: function() {
             if (!local_game) {
               return
             }
-            var menu = [
-              { "text": "Save" }
-            ];
-            this.$router.showOptionMenu('Menu', menu, 'Select', (selected) => {
-              console.log(selected.text);
-            }, () => {}, 0);
           },
           center: function() {
             if (!local_game) {
@@ -569,16 +563,16 @@ window.addEventListener("load", function() {
           var _H = window['chess_lichess'].GAME.history({ verbose: true });
           var c = _H.length - 1;
           if (_H[c]) {
-            var from = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c].from))
-            var to = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c].to))
-            from.classList.add('h-select-cursor');
-            to.classList.add('h-select-cursor');
             if (_H[c - 1]) {
               var from = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c - 1].from))
               var to = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c - 1].to))
               from.classList.remove('h-select-cursor');
               to.classList.remove('h-select-cursor');
             }
+            var from = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c].from))
+            var to = window['chess_lichess'].getPosition(window['chess_lichess'].getMoveDOM(_H[c].to))
+            from.classList.add('h-select-cursor');
+            to.classList.add('h-select-cursor');
           }
         }
       }
@@ -1690,7 +1684,6 @@ window.addEventListener("load", function() {
             { "text": "Help & Support" },
             { "text": "Login Lichess" },
             { "text": "Local Game" },
-            { "text": "Saved Game" },
             { "text": "Load PGN" }
           ];
           if (res) {
@@ -1702,7 +1695,6 @@ window.addEventListener("load", function() {
               { "text": "Send Challenge" },
               { "text": "VS Computer" },
               { "text": "Local Game" },
-              { "text": "Saved Game" },
               { "text": "Load PGN" },
               { "text": "Logout" }
             ];
@@ -1755,33 +1747,7 @@ window.addEventListener("load", function() {
         //  nav[this.verticalNavIndex].click();
         //}
       },
-      right: function() {
-        var proj = this.data.projects[this.verticalNavIndex];
-        if (proj) {
-          var title = 'Options';
-          var menu = [
-            { "text": "Show Tasks" },
-            { "text": "Show Sections" },
-            { "text": "Edit Project" },
-            { "text": "Delete Project" }
-          ];
-          this.$router.showOptionMenu(title, menu, 'Select', (selected) => {
-            setTimeout(() => {
-              if (selected.text === 'Show Tasks') {
-                
-              } else if (selected.text === 'Show Sections') {
-                
-              } else if (selected.text === 'Edit Project') {
-                
-              } else if (selected.text === 'Delete Project') {
-                
-              }
-            }, 101);
-          }, () => {
-            this.methods.toggleSoftKeyText();
-          }, 0);
-        }
-      }
+      right: function() {}
     },
     backKeyListener: function() {
       return false;
