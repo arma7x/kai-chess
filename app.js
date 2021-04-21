@@ -8,14 +8,7 @@ window.addEventListener("load", function() {
   var LICHESS_API = null;
 
   const state = new KaiState({
-    'SEEK_OPTIONS': {
-      rated: false,
-      time: 180,
-      increment: 180,
-      variant: 'standard',
-      color: 'random',
-      ratingRange: ''
-    },
+    'SEEK_OPTIONS': {},
   });
 
   const parseNdJSON = (jsonString) => {
@@ -726,7 +719,7 @@ window.addEventListener("load", function() {
             if (!local_game) {
               return
             }
-            var menu = [{ "text": "Save" }];
+            var menu = []; // { "text": "Save" }
             if (!DRAW_OFFER && GAME_STATUS) {
               menu.push({ "text": "Offer Draw" });
             }
@@ -1062,7 +1055,7 @@ window.addEventListener("load", function() {
       },
       setVariant: function() {
         var menu = [
-          { "text": "standart", "checked": false },
+          { "text": "standard", "checked": false },
           { "text": "chess960", "checked": false },
           { "text": "crazyhouse", "checked": false },
           { "text": "antichess", "checked": false },
@@ -1222,7 +1215,7 @@ window.addEventListener("load", function() {
       },
       setVariant: function() {
         var menu = [
-          { "text": "standart", "checked": false },
+          { "text": "standard", "checked": false },
           { "text": "chess960", "checked": false },
           { "text": "crazyhouse", "checked": false },
           { "text": "antichess", "checked": false },
@@ -1480,8 +1473,8 @@ window.addEventListener("load", function() {
       isSearching: false,
       ratingRange: '',
       rated: 'false',
-      time: 0,
-      increment: 0,
+      time: '',
+      increment: '',
       color: 'random',
       variant: 'standard'
     },
@@ -1531,7 +1524,7 @@ window.addEventListener("load", function() {
       },
       setVariant: function() {
         var menu = [
-          { "text": "standart", "checked": false },
+          { "text": "standard", "checked": false },
           { "text": "chess960", "checked": false },
           { "text": "crazyhouse", "checked": false },
           { "text": "antichess", "checked": false },
@@ -1557,8 +1550,8 @@ window.addEventListener("load", function() {
         this.data.increment = document.getElementById('increment').value;
         var opts = {
           rated: JSON.parse(this.data.rated),
-          time: JSON.parse(this.data.time),
-          increment: JSON.parse(this.data.increment),
+          time: JSON.parse(this.data.time === '' ? 0 : this.data.time),
+          increment: JSON.parse(this.data.increment === '' ? 0 : this.data.increment),
           color: this.data.color,
           variant: this.data.variant,
           ratingRange: this.data.ratingRange
@@ -1566,14 +1559,18 @@ window.addEventListener("load", function() {
         console.log(opts);
         if (LICHESS_API) {
           this.data.isSearching = true;
+          this.$router.showLoading(false);
           this.$router.setSoftKeyLeftText('Cancel');
           window['chess_seeking'] = LICHESS_API.seekChallenge(opts, () => {});
           window['chess_seeking'][0]
           .catch((e) => {
-            this.$router.showToast('Error');
+            if (typeof e.response === 'object')
+              this.$router.showToast('Error');
+            this.$router.hideLoading();
           })
           .finally(() => {
             this.data.isSearching = false;
+            this.$router.hideLoading();
             this.$router.setSoftKeyLeftText('');
           })
         }
@@ -1857,6 +1854,23 @@ window.addEventListener("load", function() {
     }
   }, 500);
 
+  function displayKaiAds() {
+    getKaiAd({
+      publisher: 'ac3140f7-08d6-46d9-aa6f-d861720fba66',
+      app: 'k-chess',
+      slot: 'kaios',
+      onerror: err => console.error(err),
+      onready: ad => {
+        ad.call('display')
+        setTimeout(() => {
+          document.body.style.position = '';
+        }, 1000);
+      }
+    })
+  }
+
+  displayKaiAds();
+
   document.addEventListener('visibilitychange', () => {
     if (app.$router.stack.length === 1) {
       setTimeout(() => {
@@ -1873,6 +1887,7 @@ window.addEventListener("load", function() {
         clearInterval(IFRAME_TIMER);
       }
     } else if (document.visibilityState === 'visible') {
+      displayKaiAds();
       const browser = app.$router.stack[app.$router.stack.length - 1];
       if (browser.name === 'browser') {
         if (document.activeElement.tagName !== 'IFRAME') {
@@ -1886,18 +1901,5 @@ window.addEventListener("load", function() {
       }, 500);
     }
   });
-
-  getKaiAd({
-    publisher: 'ac3140f7-08d6-46d9-aa6f-d861720fba66',
-    app: 'k-chess',
-    slot: 'kaios',
-    onerror: err => console.error(err),
-    onready: ad => {
-      ad.call('display')
-      setTimeout(() => {
-        document.body.style.position = '';
-      }, 1000);
-    }
-  })
 
 });
