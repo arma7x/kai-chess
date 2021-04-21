@@ -410,6 +410,20 @@ window.addEventListener("load", function() {
             }
             if (p1.toLowerCase().indexOf('bot') > -1 && p2.toLowerCase().indexOf('bot') > -1)
               return
+            HISTORY = JSON.parse(JSON.stringify(window['chess'].GAME.history({ verbose: true })));
+            var c = window['chess'].GAME.history().length - 1;
+            if (HISTORY[c]) {
+              var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].from))
+              var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c].to))
+              from.classList.remove('h-select-cursor');
+              to.classList.remove('h-select-cursor');
+              if (HISTORY[c - 1]) {
+                var from = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].from))
+                var to = window['chess'].getPosition(window['chess'].getMoveDOM(HISTORY[c - 1].to))
+                from.classList.add('h-select-cursor');
+                to.classList.add('h-select-cursor');
+              }
+            }
             window['chess'].undo()
           }
         },
