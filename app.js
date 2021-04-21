@@ -1352,6 +1352,8 @@ window.addEventListener("load", function() {
     name: 'challengeRequest',
     data: {
       title: 'challengeRequest',
+      challenges: [],
+      selected: null
     },
     verticalNavClass: '.challengeRequestNav',
     templateUrl: document.location.origin + '/templates/challengeRequest.html',
@@ -1364,38 +1366,106 @@ window.addEventListener("load", function() {
       window['chess_events'] = LICHESS_API.streamEvents(this.methods.onStream);
     },
     unmounted: function() {
-      this.data.isSeek = false;
-      this.data.response = null;
+      this.data.challenges = [];
+      this.data.selected = null;
       window['chess_events'][1].abort();
     },
     methods: {
       onStream: function(evt) {
+        var challenges = [];
+        var canceled = [];
+        var _challenges = [];
         var logs = parseNdJSON(evt);
-        console.log(logs);
+        // console.log(logs);
+        var resume = true;
+        logs.forEach((log) => {
+          if (log.type === 'challenge') {
+            challenges.push(log.challenge);
+          } else if (log.type === 'challengeCanceled' || log.type === 'challengeDeclined') {
+            canceled.push(log.challenge.id);
+          } else if (log.type === 'gameStart') {
+            if (log.game.id === this.data.selected) {
+              resume = false;
+              loadOnlineGame(this.$router, log.game.id, 'human', 'human', 'white', '', true);
+            }
+          }
+        });
+        if (!resume)
+          return
+        challenges.forEach((i) => {
+          if (canceled.indexOf(i.id) == -1) {
+            _challenges.push(i);
+          }
+        });
+        //console.log(_challenges);
+        this.setData({challenges: _challenges});
+        if (_challenges.length > 0) {
+          this.$router.setSoftKeyText('Decline', '', 'Accept');
+        } else {
+          this.$router.setSoftKeyText('', '', '');
+        }
       }
     },
     softKeyText: { left: '', center: '', right: '' },
     softKeyListener: {
-      left: function() {},
-      center: function() {
-        const listNav = document.querySelectorAll(this.verticalNavClass);
-        if (this.verticalNavIndex > -1) {
-          if (listNav[this.verticalNavIndex]) {
-            listNav[this.verticalNavIndex].click();
-          }
+      left: function() {
+        var challenge = this.data.challenges[this.verticalNavIndex];
+        if (challenge) {
+          var _id = challenge.id;
+          console.log(_id);
+          this.$router.showLoading();
+          LICHESS_API.declineChallenge(_id)[0]
+          .then((r) => {
+            //console.log(r);
+          })
+          .catch((e) => {
+            console.log(e);
+          })
+          .finally(() => {
+            this.$router.hideLoading();
+          });
         }
       },
-      right: function() {}
+      center: function() {},
+      right: function() {
+        var challenge = this.data.challenges[this.verticalNavIndex];
+        if (challenge) {
+          this.data.selected = challenge.id;
+          console.log(this.data.selected);
+          this.$router.showLoading();
+          LICHESS_API.acceptChallenge(this.data.selected)[0]
+          .then((r) => {
+            //console.log(r);
+          })
+          .catch((e) => {
+            console.log(e);
+            this.data.selected = null;
+          })
+          .finally(() => {
+            this.$router.hideLoading();
+          });
+        }
+      }
     },
     dPadNavListener: {
       arrowUp: function() {
         this.navigateListNav(-1);
+        if (challenges.length > 0) {
+          this.$router.setSoftKeyText('Decline', '', 'Accept');
+        } else {
+          this.$router.setSoftKeyText('', '', '');
+        }
       },
       arrowRight: function() {
         //this.navigateTabNav(-1);
       },
       arrowDown: function() {
         this.navigateListNav(1);
+        if (challenges.length > 0) {
+          this.$router.setSoftKeyText('Decline', '', 'Accept');
+        } else {
+          this.$router.setSoftKeyText('', '', '');
+        }
       },
       arrowLeft: function() {
         //this.navigateTabNav(1);

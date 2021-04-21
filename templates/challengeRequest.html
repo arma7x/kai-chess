@@ -1,4 +1,29 @@
 <div class="kui-flex-wrap">
+  <style>
+  .kui-row-center-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 100%;
+  }
+  </style>
   <ul class="kui-list kai-container">
+    {{#challenges}}
+    <li class="challengeRequestNav" style="border-bottom:1px dashed #320374;" @click='selected()'>
+      <div class="kui-row-center kui-row-center-column">
+        <h5 style="font-weight:bold;white-space:pre-wrap!important;word-break:break-word!important;">#{{ id }}</h5>
+        <div class="kui-row-center">
+          <small>{{ color }}</small>
+          <small>{{ variant.name }}</small>
+          <small>Rated: {{ #rated }}Yes{{ /rated }}{{^rated}}No{{ /rated }}</small>
+        </div>
+        <div class="kui-row-center">
+          <small>VS {{ challenger.name }}</small>
+          <small>{{ perf.name }}</small>
+        </div>
+      </div>
+    </li>
+    {{/challenges}}
   </ul>
 </div>
