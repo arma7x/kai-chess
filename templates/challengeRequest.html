@@ -12,14 +12,24 @@
     {{#challenges}}
     <li class="challengeRequestNav" style="border-bottom:1px dashed #320374;" @click='selected()'>
       <div class="kui-row-center kui-row-center-column">
-        <h5 style="font-weight:bold;white-space:pre-wrap!important;word-break:break-word!important;">#{{ id }}</h5>
         <div class="kui-row-center">
-          <small>{{ color }}</small>
-          <small>{{ variant.name }}</small>
+          <h5 style="font-weight:bold;white-space:pre-wrap!important;word-break:break-word!important;">#{{ id }}</h5>
           <small>Rated: {{ #rated }}Yes{{ /rated }}{{^rated}}No{{ /rated }}</small>
         </div>
         <div class="kui-row-center">
-          <small>VS {{ challenger.name }}</small>
+          <small>{{ color }}</small>
+          <small>{{ variant.name }}</small>
+          <small>
+            {{ #timeControl.show }}
+              {{ timeControl.show }}
+            {{ /timeControl.show }}
+            {{ ^timeControl.show }}
+              {{ timeControl.type }}
+            {{ /timeControl.show }}
+          </small>
+        </div>
+        <div class="kui-row-center">
+          <small style="font-weight:bold;{{ #challenger.online }}color:green;{{ /challenger.online }}{{ ^challenger.online }}color:red;{{ /challenger.online }}">{{ challenger.name }}</small>
           <small>{{ perf.name }}</small>
         </div>
       </div>

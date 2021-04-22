@@ -3,7 +3,7 @@ window.addEventListener("load", function() {
   localforage.setDriver(localforage.LOCALSTORAGE);
 
   const CLIENT_ID = "bXKD7cYJPPMzmlfk";
-  const SCOPE = 'challenge:write challenge:read bot:play board:play preference:read';
+  const SCOPE = 'challenge:write challenge:read board:play';
   var IFRAME_TIMER;
   var LICHESS_API = null;
 
@@ -48,21 +48,21 @@ window.addEventListener("load", function() {
     data: {
       title: 'helpSupportPage'
     },
-    template: `<div style="padding:4px;"><style>.kui-software-key{height:0px}</style>
-      <h5>Premium features are not available(maybe implemented on next update):</h5>
-      <ul>
-        <li>1. Backups</li>
-        <li>2. Archive a project</li>
-        <li>3. Unarchive a project</li>
-        <li>4. Filters</li>
-        <li>5. Label</li>
-        <li>6. User settings</li>
-        <li>7. Templates</li>
-        <li>8. Reminders</li>
-        <li>9. Get all completed items(Task)</li>
-        <li>10. Project Notes(Project Comment)</li>
-        <li>11. Item Notes(Task Comment)</li>
-      </ul>
+    template: `<div><style>.kui-software-key{height:0px}</style>
+      <div class="kui-flex-wrap">
+        <div class="kai-container" style="margin:2px;">
+          <h5>Available features:</h5>
+        </div>
+        <ul class="kai-container" style="padding: 2px 4px;font-size:14px;">
+          <li>1) Ongoing Games</li>
+          <li>2) <span style="text-decoration: line-through;">Matchmaking</span></li>
+          <li>3) Challenge Requests</li>
+          <li>4) <span style="text-decoration: line-through;">Send Challenge</span></li>
+          <li>5) VS Computer</li>
+          <li>6) Local Game</li>
+          <li>7) Load PGN</li>
+        </ul>
+      </div>
     </div>`,
     mounted: function() {
       this.$router.setHeaderTitle('Help & Support');
@@ -955,6 +955,7 @@ window.addEventListener("load", function() {
           if (r.response.nowPlaying.length > 0) {
             this.setData({games: r.response.nowPlaying});
             this.$router.setSoftKeyCenterText('SELECT');
+            console.log(r.response.nowPlaying);
           } else {
             this.setData({games: []});
             this.$router.setSoftKeyCenterText('');
@@ -1377,7 +1378,7 @@ window.addEventListener("load", function() {
         var canceled = [];
         var _challenges = [];
         var logs = parseNdJSON(evt);
-        // console.log(logs);
+        console.log(logs);
         var resume = true;
         logs.forEach((log) => {
           if (log.type === 'challenge') {
@@ -1682,7 +1683,7 @@ window.addEventListener("load", function() {
           var title = 'Menu';
           var menu = [
             { "text": "Help & Support" },
-            { "text": "Login Lichess" },
+            { "text": "Login Lichess.org" },
             { "text": "Local Game" },
             { "text": "Load PGN" }
           ];
@@ -1690,9 +1691,9 @@ window.addEventListener("load", function() {
             menu = [
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
-              { "text": "Matchmaking" },
+              //{ "text": "Matchmaking" },
               { "text": "Challenge Requests" },
-              { "text": "Send Challenge" },
+              //{ "text": "Send Challenge" },
               { "text": "VS Computer" },
               { "text": "Local Game" },
               { "text": "Load PGN" },
@@ -1706,7 +1707,7 @@ window.addEventListener("load", function() {
           }
           this.$router.showOptionMenu(title, menu, 'Select', (selected) => {
             setTimeout(() => {
-              if (selected.text === 'Login Lichess') {
+              if (selected.text === 'Login Lichess.org') {
                 loginPage(this.$router);
               } else if (selected.text === 'Ongoing Games') {
                 this.$router.push('onlineGames');
