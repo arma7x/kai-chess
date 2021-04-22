@@ -48,22 +48,7 @@ window.addEventListener("load", function() {
     data: {
       title: 'helpSupportPage'
     },
-    template: `<div><style>.kui-software-key{height:0px}</style>
-      <div class="kui-flex-wrap">
-        <div class="kai-container" style="margin:2px;">
-          <h5>Available features:</h5>
-        </div>
-        <ul class="kai-container" style="padding: 2px 4px;font-size:14px;">
-          <li>1) Ongoing Games</li>
-          <li>2) <span style="text-decoration: line-through;">Matchmaking</span></li>
-          <li>3) Challenge Requests</li>
-          <li>4) <span style="text-decoration: line-through;">Send Challenge</span></li>
-          <li>5) VS Computer</li>
-          <li>6) Local Game</li>
-          <li>7) Load PGN</li>
-        </ul>
-      </div>
-    </div>`,
+    templateUrl: document.location.origin + '/templates/helpnsupport.html',
     mounted: function() {
       this.$router.setHeaderTitle('Help & Support');
       navigator.spatialNavigationEnabled = false;
@@ -528,6 +513,11 @@ window.addEventListener("load", function() {
 
   const loadOnlineGame = function ($router, game_id, p1='human', p2='human', pov='white', fen='', local_game = true) {
 
+    var GAME_INIT = true;
+    var DRAW_OFFER = false;
+    var GAME_STATUS = true;
+    var STATE = null;
+
     var listener = {
       onGameOver: function() {
         var s = document.getElementById('game-status')
@@ -561,6 +551,19 @@ window.addEventListener("load", function() {
         s.innerText = 'In Progress'
         if (local_game && window['chess_lichess'] != null) {
           var _H = window['chess_lichess'].GAME.history({ verbose: true });
+          if (pov[0] === color && _H.length > 0) {
+            if (STATE) {
+              window['chess_timer'] = setInterval(() => {
+                STATE[color + 'time'] = STATE[color + 'time'] - 1000;
+                document.getElementById('timer').innerText = new Date(STATE[color + 'time']).toISOString().substr(11, 8);
+              }, 1000);
+            }
+          } else {
+            if (STATE) {
+              document.getElementById('timer').innerText = new Date(STATE[pov[0] + 'time']).toISOString().substr(11, 8);
+            }
+            clearInterval(window['chess_timer']);
+          }
           var c = _H.length - 1;
           if (_H[c]) {
             if (_H[c - 1]) {
@@ -577,9 +580,6 @@ window.addEventListener("load", function() {
         }
       }
     }
-    var GAME_INIT = true;
-    var DRAW_OFFER = false;
-    var GAME_STATUS = true;
 
     $router.push(
       new Kai({
@@ -596,15 +596,27 @@ window.addEventListener("load", function() {
           window['chess_stream'] = LICHESS_API.streamBoardState(game_id, this.methods.onStream)
         },
         unmounted: function() {
-          window['chess_lichess'].WORKER.terminate()
-          var a = document.getElementsByClassName('kui-router-m-top')
-          a[0].style.marginTop = '28px'
-          window['chess_lichess'] = null
-          window['chess_stream'][1].abort();
+          var a = document.getElementsByClassName('kui-router-m-top');
+          a[0].style.marginTop = '28px';
+          if (window['chess_lichess']) {
+            window['chess_lichess'].WORKER.terminate();
+            window['chess_lichess'] = null;
+          }
+          if (window['chess_stream'])
+            window['chess_stream'][1].abort();
+          if (window['chess_timer'])
+            clearInterval(window['chess_timer']);
         },
         methods: {
           onStream: function(evt) {
             var logs = parseNdJSON(evt);
+            if (logs[0]) {
+              if (logs[0].error) {
+                console.log(logs);
+                $router.pop();
+                return
+              }
+            }
             if (logs.length === 1 && GAME_INIT) {
               k = logs[0];
               localforage.getItem('LICHESS_USER')
@@ -614,12 +626,14 @@ window.addEventListener("load", function() {
                   pov = 'white';
                 }
                 window['chess_lichess'] = createChessGame(p1, p2, pov, 'container', listener);
-                window['chess_lichess'].loadFEN(fen);
+                // window['chess_lichess'].loadFEN(fen);
                 if (k.state.moves !== '') {
+                  STATE = k.state;
                   var mvs = k.state.moves.split(' ');
                   mvs.forEach(m => {
                     window['chess_lichess'].GAME.move(m, { sloppy: true })
                   })
+                  // console.log(pov[0], window['chess_lichess'].GAME.turn());
                   window['chess_lichess'].updateGame();
                   this.data.mvs = mvs.length;
                   var _draw = 'wdraw'
@@ -639,6 +653,7 @@ window.addEventListener("load", function() {
             if (logs.length > 1 && !GAME_INIT) {
               if (logs[logs.length - 1].type === 'gameState') {
                 var log = logs[logs.length - 1];
+                STATE = log;
                 var mvs = log.moves.split(' ');
                 if (this.data.mvs === 0 && log.status === 'started') {
                   window['chess_lichess'].GAME.move(mvs[0], { sloppy: true });
@@ -955,7 +970,6 @@ window.addEventListener("load", function() {
           if (r.response.nowPlaying.length > 0) {
             this.setData({games: r.response.nowPlaying});
             this.$router.setSoftKeyCenterText('SELECT');
-            console.log(r.response.nowPlaying);
           } else {
             this.setData({games: []});
             this.$router.setSoftKeyCenterText('');
@@ -1018,7 +1032,7 @@ window.addEventListener("load", function() {
     templateUrl: document.location.origin + '/templates/vsComputer.html',
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
-      this.$router.setHeaderTitle('VS Computer');
+      this.$router.setHeaderTitle('Challenge Computer');
       if (LICHESS_API == null) {
         return
       }
@@ -1090,13 +1104,17 @@ window.addEventListener("load", function() {
         this.data['days'] = document.getElementById('days').value;
         var opts = {
           level: this.data.level,
-          'clock.limit': this.data['clock.limit'],
-          'clock.increment': this.data['clock.increment'],
+          'clock.limit': parseInt(this.data['clock.limit']) * 60,
+          'clock.increment': parseInt(this.data['clock.increment']),
           days: this.data.days,
           color: this.data.color,
           variant: this.data.variant
         }
         console.log(opts);
+        if (opts['clock.limit'] < 480) {
+          this.$router.showToast('Minimum 8m');
+          return
+        }
         this.data.isSeek = true;
         this.$router.showLoading();
         if (LICHESS_API) {
@@ -1106,6 +1124,7 @@ window.addEventListener("load", function() {
           })
           .catch((e) => {
             console.log(e);
+            this.$router.showToast('Error');
             this.$router.hideLoading();
             this.data.isSeek = false;
           });
@@ -1184,7 +1203,7 @@ window.addEventListener("load", function() {
     templateUrl: document.location.origin + '/templates/vsHuman.html',
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
-      this.$router.setHeaderTitle('Send Challenge');
+      this.$router.setHeaderTitle('Challenge Human');
       if (LICHESS_API == null) {
         return
       }
@@ -1251,13 +1270,17 @@ window.addEventListener("load", function() {
         this.data['days'] = document.getElementById('days').value;
         var opts = {
           rated: JSON.parse(this.data.rated),
-          'clock.limit': this.data['clock.limit'],
-          'clock.increment': this.data['clock.increment'],
+          'clock.limit': parseInt(this.data['clock.limit']) * 60,
+          'clock.increment': parseInt(this.data['clock.increment']),
           days: this.data.days,
           color: this.data.color,
           variant: this.data.variant
         }
         console.log(this.data.username, opts);
+        if (opts['clock.limit'] < 480) {
+          this.$router.showToast('Minimum 8m');
+          return
+        }
         this.$router.showLoading();
         if (LICHESS_API) {
           LICHESS_API.createChallenge(this.data.username, opts)[0]
@@ -1559,8 +1582,8 @@ window.addEventListener("load", function() {
         this.data.increment = document.getElementById('increment').value;
         var opts = {
           rated: JSON.parse(this.data.rated),
-          time: JSON.parse(this.data.time === '' ? 0 : this.data.time),
-          increment: JSON.parse(this.data.increment === '' ? 0 : this.data.increment),
+          time: parseInt(this.data.time),
+          increment: parseInt(this.data.increment),
           color: this.data.color,
           variant: this.data.variant,
           ratingRange: this.data.ratingRange
@@ -1691,10 +1714,10 @@ window.addEventListener("load", function() {
             menu = [
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
-              //{ "text": "Matchmaking" },
+              { "text": "Matchmaking" },
               { "text": "Challenge Requests" },
-              //{ "text": "Send Challenge" },
-              { "text": "VS Computer" },
+              { "text": "Challenge Human" },
+              { "text": "Challenge Computer" },
               { "text": "Local Game" },
               { "text": "Load PGN" },
               { "text": "Logout" }
@@ -1715,9 +1738,9 @@ window.addEventListener("load", function() {
                 this.$router.push('matchmaking');
               } else if (selected.text === 'Challenge Requests') {
                 this.$router.push('challengeRequest');
-              } else if (selected.text === 'VS Computer') {
+              } else if (selected.text === 'Challenge Computer') {
                 this.$router.push('vsComputer');
-              } else if (selected.text === 'Send Challenge') {
+              } else if (selected.text === 'Challenge Human') {
                 this.$router.push('vsHuman');
               } else if (selected.text === 'Load PGN') {
                 this.$router.push('pgnFiles');

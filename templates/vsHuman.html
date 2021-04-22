@@ -21,17 +21,23 @@
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ variant }}</span>
       </div>
     </li>
-    <li class="vsHumanNav" style="border-top:1px dashed #320374;font-size:12px;white-space:pre-wrap!important;word-break:break-word!important;">Clock initial time in seconds. If empty, a correspondence game is created.</li>
     <li style="border-top:1px dashed #320374;">
-      <input id="clock.limit" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:96%;" placeholder="Clock Limit(0 - 10800s)" value="{{ clock.limit }}"/>
+      <div class="kui-row-center">
+        <span>Minutes per side</span>
+        <input id="clock.limit" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="minutes" value="{{ clock.limit }}"/>
+      </div>
     </li>
-    <li class="vsHumanNav" style="border-top:1px dashed #320374;font-size:12px;white-space:pre-wrap!important;word-break:break-word!important;">Clock increment in seconds. If empty, a correspondence game is created.</li>
     <li style="border-top:1px dashed #320374;">
-      <input id="clock.increment" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:96%;" placeholder="Clock Increment(0 - 60s)" value="{{ clock.increment }}"/>
+      <div class="kui-row-center">
+        <span>Increment</span>
+        <input id="clock.increment" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="seconds" value="{{ clock.increment }}"/>
+      </div>
     </li>
-    <li class="vsHumanNav" style="border-top:1px dashed #320374;font-size:12px;white-space:pre-wrap!important;word-break:break-word!important;">Days per move, for correspondence games. Clock settings must be omitted.</li>
     <li style="border-top:1px dashed #320374;">
-      <input id="days" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:96%;" placeholder="Days(1 - 15)" value="{{ days }}"/>
+      <div class="kui-row-center">
+        <span>Days per turn</span>
+        <input id="days" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="days" value="{{ days }}"/>
+      </div>
     </li>
     <li class="vsHumanNav" style="border-top:1px dashed #320374;" @click="submit()">
       <div class="kui-row-center" style="justify-content:space-around;">
