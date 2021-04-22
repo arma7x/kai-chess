@@ -81,6 +81,8 @@ window.addEventListener("load", function() {
         sk.classList.add("sr-only");
         const kr = document.getElementById('__kai_router__');
         kr.classList.add("full-screen-browser");
+        var a = document.getElementsByClassName('kui-router-m-top')
+        a[0].style.marginTop = '0px'
         navigator.spatialNavigationEnabled = true;
         var frameContainer = document.getElementById('login-container');
         loginTab = new Tab(url);
@@ -147,6 +149,8 @@ window.addEventListener("load", function() {
         sk.classList.remove("sr-only");
         const kr = document.getElementById('__kai_router__');
         kr.classList.remove("full-screen-browser");
+        var a = document.getElementsByClassName('kui-router-m-top')
+        a[0].style.marginTop = '28px'
         navigator.spatialNavigationEnabled = false;
       },
       methods: {
@@ -551,8 +555,9 @@ window.addEventListener("load", function() {
         s.innerText = 'In Progress'
         if (local_game && window['chess_lichess'] != null) {
           var _H = window['chess_lichess'].GAME.history({ verbose: true });
-          if (pov[0] === color && _H.length > 0) {
+          if (pov[0] === color && _H.length > 1) {
             if (STATE) {
+              clearInterval(window['chess_timer']);
               window['chess_timer'] = setInterval(() => {
                 STATE[color + 'time'] = STATE[color + 'time'] - 1000;
                 document.getElementById('timer').innerText = new Date(STATE[color + 'time']).toISOString().substr(11, 8);
@@ -610,6 +615,7 @@ window.addEventListener("load", function() {
         methods: {
           onStream: function(evt) {
             var logs = parseNdJSON(evt);
+            console.log(logs);
             if (logs[0]) {
               if (logs[0].error) {
                 console.log(logs);
@@ -653,9 +659,9 @@ window.addEventListener("load", function() {
             if (logs.length > 1 && !GAME_INIT) {
               if (logs[logs.length - 1].type === 'gameState') {
                 var log = logs[logs.length - 1];
-                STATE = log;
                 var mvs = log.moves.split(' ');
                 if (this.data.mvs === 0 && log.status === 'started') {
+                  STATE = log;
                   window['chess_lichess'].GAME.move(mvs[0], { sloppy: true });
                   window['chess_lichess'].resetCursor();
                   var h = window['chess_lichess'].GAME.history({ verbose: true })
@@ -664,6 +670,7 @@ window.addEventListener("load", function() {
                   }
                 }
                 if (mvs.length > this.data.mvs) {
+                  STATE = log;
                   window['chess_lichess'].GAME.move(mvs[mvs.length - 1], { sloppy: true });
                   window['chess_lichess'].updateGame();
                   window['chess_lichess'].resetCursor();
@@ -691,19 +698,65 @@ window.addEventListener("load", function() {
                   var s = document.getElementById('game-status')
                   s.innerText = 'Draw'
                   GAME_STATUS = false
-                }
-                if (log.status === 'resign') {
+                } else if (log.status === 'stalemate') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = 'Stalemate'
+                  GAME_STATUS = false
+                } else if (log.status === 'resign') {
                   this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
                   var s = document.getElementById('game-status')
                   s.innerText = `Resign, ${log.winner[0].toUpperCase()} Win`
                   GAME_STATUS = false
-                }
-                if (log.status === 'aborted') {
+                } else if (log.status === 'aborted') {
                   this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
                   var s = document.getElementById('game-status')
                   s.innerText = 'Abort'
+                  GAME_STATUS = false
+                } else if (log.status === 'mate') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = `Mate, ${log.winner[0].toUpperCase()} Win`
+                  GAME_STATUS = false
+                } else if (log.status === 'timeout') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = `Timeout, ${log.winner[0].toUpperCase()} Win`
+                  GAME_STATUS = false
+                } else if (log.status === 'outoftime') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = `Outoftime, ${log.winner[0].toUpperCase()} Win`
+                  GAME_STATUS = false
+                } else if (log.status === 'cheat') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = `Cheat, ${log.winner[0].toUpperCase()} Win`
+                  GAME_STATUS = false
+                } else if (log.status === 'noStart') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = `NoStart, ${log.winner[0].toUpperCase()} Win`
+                  GAME_STATUS = false
+                } else if (log.status === 'unknownFinish') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = `UnknownFinish, ${log.winner[0].toUpperCase()} Win`
+                  GAME_STATUS = false
+                } else if (log.status === 'variantEnd') {
+                  this.$router.setSoftKeyRightText('');
+                  DRAW_OFFER = false
+                  var s = document.getElementById('game-status')
+                  s.innerText = `VariantEnd, ${log.winner[0].toUpperCase()} Win`
                   GAME_STATUS = false
                 }
               } else if (logs[logs.length - 1].type === 'chatLine') {
@@ -1021,8 +1074,8 @@ window.addEventListener("load", function() {
       title: 'vsComputer',
       isSeek: false,
       level: '1',
-      'clock.limit': '',
-      'clock.increment': '',
+      'clock_limit': '',
+      'clock_increment': '',
       days: '',
       color: 'random',
       variant: 'standard',
@@ -1099,19 +1152,19 @@ window.addEventListener("load", function() {
         if (this.data.isSeek) {
           return
         }
-        this.data['clock.limit'] = document.getElementById('clock.limit').value;
-        this.data['clock.increment'] = document.getElementById('clock.increment').value;
+        this.data['clock_limit'] = document.getElementById('clock_limit').value;
+        this.data['clock_increment'] = document.getElementById('clock_increment').value;
         this.data['days'] = document.getElementById('days').value;
         var opts = {
           level: this.data.level,
-          'clock.limit': parseInt(this.data['clock.limit']) * 60,
-          'clock.increment': parseInt(this.data['clock.increment']),
+          'clock.limit': this.data['clock_limit'] === '' ? '' :parseInt(this.data['clock_limit']) * 60,
+          'clock.increment': this.data['clock_increment'] === '' ? '' :parseInt(this.data['clock_increment']),
           days: this.data.days,
           color: this.data.color,
           variant: this.data.variant
         }
         console.log(opts);
-        if (opts['clock.limit'] < 480) {
+        if (opts['clock_limit'] < 480) {
           this.$router.showToast('Minimum 8m');
           return
         }
@@ -1192,8 +1245,8 @@ window.addEventListener("load", function() {
       isPending: false,
       username: '',
       rated: 'false',
-      'clock.limit': '',
-      'clock.increment': '',
+      'clock_limit': '',
+      'clock_increment': '',
       days: '',
       color: 'random',
       variant: 'standard',
@@ -1265,19 +1318,19 @@ window.addEventListener("load", function() {
           return
         }
         this.data.username = document.getElementById('username').value;
-        this.data['clock.limit'] = document.getElementById('clock.limit').value;
-        this.data['clock.increment'] = document.getElementById('clock.increment').value;
+        this.data['clock_limit'] = document.getElementById('clock_limit').value;
+        this.data['clock_increment'] = document.getElementById('clock_increment').value;
         this.data['days'] = document.getElementById('days').value;
         var opts = {
           rated: JSON.parse(this.data.rated),
-          'clock.limit': parseInt(this.data['clock.limit']) * 60,
-          'clock.increment': parseInt(this.data['clock.increment']),
+          'clock.limit': this.data['clock_limit'] === '' ? '' :parseInt(this.data['clock_limit']) * 60,
+          'clock.increment': this.data['clock_increment'] === '' ? '' :parseInt(this.data['clock_increment']),
           days: this.data.days,
           color: this.data.color,
           variant: this.data.variant
         }
         console.log(this.data.username, opts);
-        if (opts['clock.limit'] < 480) {
+        if (opts['clock_limit'] < 480) {
           this.$router.showToast('Minimum 8m');
           return
         }
@@ -1505,8 +1558,8 @@ window.addEventListener("load", function() {
       isSearching: false,
       ratingRange: '',
       rated: 'false',
-      time: '',
-      increment: '',
+      time: '0',
+      increment: '0',
       color: 'random',
       variant: 'standard'
     },
@@ -1673,10 +1726,6 @@ window.addEventListener("load", function() {
     name: 'homepage',
     data: {
       title: 'homepage',
-      offset: -1,
-      projects: [],
-      projectsVerticalNavIndexID: 0,
-      empty: true,
       LICHESS_ACCESS_TOKEN: null
     },
     templateUrl: document.location.origin + '/templates/homepage.html',
@@ -1685,22 +1734,11 @@ window.addEventListener("load", function() {
       this.$router.setHeaderTitle('K-Chess');
     },
     unmounted: function() {},
-    methods: {
-      toggleSoftKeyText: function() {
-        setTimeout(() => {
-          if (!this.$router.bottomSheet) {
-            if (this.data.projects.length > 0) {
-              this.$router.setSoftKeyText('Menu', '', 'More');
-            } else {
-              this.$router.setSoftKeyText('Menu', '', '');
-            }
-          }
-        }, 100);
-      },
-    },
-    softKeyText: { left: 'Menu', center: '', right: '' },
+    methods: {},
+    softKeyText: { left: '', center: 'Menu', right: '' },
     softKeyListener: {
-      left: function() {
+      left: function() {},
+      center: function() {
         localforage.getItem('LICHESS_ACCESS_TOKEN')
         .then((res) => {
           var title = 'Menu';
@@ -1757,19 +1795,11 @@ window.addEventListener("load", function() {
                 this.$router.push('newLocalGame');
               }
             }, 101);
-          }, () => {
-            this.methods.toggleSoftKeyText();
-          }, 0);
+          }, () => {}, 0);
         })
         .catch((err) => {
           // console.log(err);
         });
-      },
-      center: function() {
-        //if (this.verticalNavIndex > -1) {
-        //  const nav = document.querySelectorAll(this.verticalNavClass);
-        //  nav[this.verticalNavIndex].click();
-        //}
       },
       right: function() {}
     },
@@ -1777,19 +1807,9 @@ window.addEventListener("load", function() {
       return false;
     },
     dPadNavListener: {
-      arrowUp: function() {
-        if (this.verticalNavIndex === 0 || this.data.projects.length === 0) {
-          return;
-        }
-        this.navigateListNav(-1);
-      },
+      arrowUp: function() {},
       arrowRight: function() {},
-      arrowDown: function() {
-        if (this.verticalNavIndex === (this.data.projects.length - 1)  || this.data.projects.length === 0) {
-          return;
-        }
-        this.navigateListNav(1);
-      },
+      arrowDown: function() {},
       arrowLeft: function() {},
     }
   });
