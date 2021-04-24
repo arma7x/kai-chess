@@ -104,7 +104,6 @@ window.addEventListener("load", function() {
         root2.appendChild(shadow);
         loginTab.iframe.addEventListener('mozbrowserlocationchange', function (e) {
           if (e.detail.url.indexOf('https://malaysiaapi.herokuapp.com/lichess/api/v1/redirect') > -1) {
-            console.log(window['loginTab'].url.url);
             const codeToken = getURLParam('code', window['loginTab'].url.url);
             if (codeToken.length > 0) {
               setTimeout(() => {
@@ -175,6 +174,87 @@ window.addEventListener("load", function() {
       }
     }));
   }
+
+  const pgnFiles = new Kai({
+    name: 'pgnFiles',
+    data: {
+      title: 'pgnFiles',
+      pgns: []
+    },
+    verticalNavClass: '.pgnFilesNav',
+    templateUrl: document.location.origin + '/templates/pgnFiles.html',
+    mounted: function() {
+      navigator.spatialNavigationEnabled = false;
+      this.$router.setHeaderTitle('Load PGN');
+      window['__DS__'] = new DataStorage(this.methods.onChange, this.methods.onReady);
+    },
+    unmounted: function() {
+      window['__DS__'].destroy();
+    },
+    methods: {
+      selected: function() {},
+      onChange: function(fileRegistry, documentTree, groups) {
+        this.methods.runFilter(fileRegistry);
+      },
+      onReady: function(status) {
+        if (status) {
+          this.$router.hideLoading();
+        } else {
+          this.$router.showLoading();
+        }
+      },
+      runFilter: function(fileRegistry) {
+        var pgns = []
+        fileRegistry.forEach((file) => {
+          var n = file.split('/');
+          var n1 = n[n.length - 1];
+          var n2 = n1.split('.');
+          if (n2.length > 1) {
+            if (n2[n2.length - 1] === 'pgn') {
+              pgns.push({'name': n1, 'path': file});
+            }
+          }
+        });
+        this.setData({pgns: pgns});
+      }
+    },
+    softKeyText: { left: '', center: 'SELECT', right: '' },
+    softKeyListener: {
+      left: function() {},
+      center: function() {
+        var pgn = this.data.pgns[this.verticalNavIndex];
+        if (pgn) {
+          window['__DS__'].getFile(pgn.path, (found) => {
+            var fr = new FileReader();
+            fr.onload = (event) => {
+              loadLocalGame(this.$router, pgn.name, 'human', 'human', 'white', event.target.result, false);
+            };
+            fr.readAsText(found);
+          }, (notfound) => {
+            console.log(notfound);
+          });
+        }
+      },
+      right: function() {}
+    },
+    dPadNavListener: {
+      arrowUp: function() {
+        this.navigateListNav(-1);
+      },
+      arrowRight: function() {
+        //this.navigateTabNav(-1);
+      },
+      arrowDown: function() {
+        this.navigateListNav(1);
+      },
+      arrowLeft: function() {
+        //this.navigateTabNav(1);
+      },
+    },
+    backKeyListener: function() {
+      this.components = [];
+    }
+  });
 
   const newLocalGame = new Kai({
     name: 'newLocalGame',
@@ -615,10 +695,9 @@ window.addEventListener("load", function() {
         methods: {
           onStream: function(evt) {
             var logs = parseNdJSON(evt);
-            console.log(logs);
+            // console.log(logs); // dev
             if (logs[0]) {
               if (logs[0].error) {
-                console.log(logs);
                 $router.pop();
                 return
               }
@@ -648,7 +727,9 @@ window.addEventListener("load", function() {
                   }
                   DRAW_OFFER = k.state[_draw];
                   if (DRAW_OFFER) {
-                    this.$router.setSoftKeyRightText('ACCEPT');
+                    if (!this.$router.bottomSheet) {
+                      this.$router.setSoftKeyRightText('ACCEPT');
+                    }
                   } else {
                     this.$router.setSoftKeyRightText('');
                   }
@@ -680,84 +761,71 @@ window.addEventListener("load", function() {
                   }
                   this.data.mvs = mvs.length;
                 }
-                if (mvs.length > this.data.mvs && log.status === 'started') {
+                if (log.status === 'started') {
                   if (pov == 'white') {
                     DRAW_OFFER = log['bdraw'];
                   } else if (pov === 'black') {
                     DRAW_OFFER = log['wdraw'];
                   }
+                  // console.log(pov, DRAW_OFFER);
                   if (DRAW_OFFER) {
-                    this.$router.setSoftKeyRightText('ACCEPT');
+                    if (!this.$router.bottomSheet) {
+                      this.$router.setSoftKeyRightText('ACCEPT');
+                    }
                   } else {
                     this.$router.setSoftKeyRightText('');
                   }
                 }
+                var s = document.getElementById('game-status')
                 if (log.status === 'draw') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
                   s.innerText = 'Draw'
                   GAME_STATUS = false
                 } else if (log.status === 'stalemate') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
                   s.innerText = 'Stalemate'
                   GAME_STATUS = false
                 } else if (log.status === 'resign') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
                   s.innerText = `Resign, ${log.winner[0].toUpperCase()} Win`
                   GAME_STATUS = false
                 } else if (log.status === 'aborted') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
                   s.innerText = 'Abort'
                   GAME_STATUS = false
                 } else if (log.status === 'mate') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
                   s.innerText = `Mate, ${log.winner[0].toUpperCase()} Win`
                   GAME_STATUS = false
                 } else if (log.status === 'timeout') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
                   s.innerText = `Timeout, ${log.winner[0].toUpperCase()} Win`
                   GAME_STATUS = false
                 } else if (log.status === 'outoftime') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
                   s.innerText = `Outoftime, ${log.winner[0].toUpperCase()} Win`
                   GAME_STATUS = false
                 } else if (log.status === 'cheat') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
-                  s.innerText = `Cheat, ${log.winner[0].toUpperCase()} Win`
+                  s.innerText = `Cheat`
                   GAME_STATUS = false
                 } else if (log.status === 'noStart') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
-                  s.innerText = `NoStart, ${log.winner[0].toUpperCase()} Win`
+                  s.innerText = `NoStart`
                   GAME_STATUS = false
                 } else if (log.status === 'unknownFinish') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
-                  s.innerText = `UnknownFinish, ${log.winner[0].toUpperCase()} Win`
+                  s.innerText = `UnknownFinish`
                   GAME_STATUS = false
                 } else if (log.status === 'variantEnd') {
-                  this.$router.setSoftKeyRightText('');
                   DRAW_OFFER = false
-                  var s = document.getElementById('game-status')
                   s.innerText = `VariantEnd, ${log.winner[0].toUpperCase()} Win`
                   GAME_STATUS = false
+                }
+                if (!GAME_STATUS) {
+                  this.$router.setSoftKeyRightText('');
+                  this.$router.setSoftKeyLeftText('');
+                  this.$router.showToast(s.innerText);
                 }
               } else if (logs[logs.length - 1].type === 'chatLine') {
                 if (logs[logs.length - 1].username === 'lichess') {
@@ -792,7 +860,7 @@ window.addEventListener("load", function() {
         softKeyText: { left: local_game ? 'Menu' : '', center: local_game ? 'MOVE' : '', right: '' },
         softKeyListener: {
           left: function() {
-            if (!local_game) {
+            if (!local_game || !GAME_STATUS) {
               return
             }
             var menu = []; // { "text": "Save" }
@@ -913,87 +981,6 @@ window.addEventListener("load", function() {
       })
     );
   }
-
-  const pgnFiles = new Kai({
-    name: 'pgnFiles',
-    data: {
-      title: 'pgnFiles',
-      pgns: []
-    },
-    verticalNavClass: '.pgnFilesNav',
-    templateUrl: document.location.origin + '/templates/pgnFiles.html',
-    mounted: function() {
-      navigator.spatialNavigationEnabled = false;
-      this.$router.setHeaderTitle('Load PGN');
-      window['__DS__'] = new DataStorage(this.methods.onChange, this.methods.onReady);
-    },
-    unmounted: function() {
-      window['__DS__'].destroy();
-    },
-    methods: {
-      selected: function() {},
-      onChange: function(fileRegistry, documentTree, groups) {
-        this.methods.runFilter(fileRegistry);
-      },
-      onReady: function(status) {
-        if (status) {
-          this.$router.hideLoading();
-        } else {
-          this.$router.showLoading();
-        }
-      },
-      runFilter: function(fileRegistry) {
-        var pgns = []
-        fileRegistry.forEach((file) => {
-          var n = file.split('/');
-          var n1 = n[n.length - 1];
-          var n2 = n1.split('.');
-          if (n2.length > 1) {
-            if (n2[n2.length - 1] === 'pgn') {
-              pgns.push({'name': n1, 'path': file});
-            }
-          }
-        });
-        this.setData({pgns: pgns});
-      }
-    },
-    softKeyText: { left: '', center: 'SELECT', right: '' },
-    softKeyListener: {
-      left: function() {},
-      center: function() {
-        var pgn = this.data.pgns[this.verticalNavIndex];
-        if (pgn) {
-          window['__DS__'].getFile(pgn.path, (found) => {
-            var fr = new FileReader();
-            fr.onload = (event) => {
-              loadLocalGame(this.$router, pgn.name, 'human', 'human', 'white', event.target.result, false);
-            };
-            fr.readAsText(found);
-          }, (notfound) => {
-            console.log(notfound);
-          });
-        }
-      },
-      right: function() {}
-    },
-    dPadNavListener: {
-      arrowUp: function() {
-        this.navigateListNav(-1);
-      },
-      arrowRight: function() {
-        //this.navigateTabNav(-1);
-      },
-      arrowDown: function() {
-        this.navigateListNav(1);
-      },
-      arrowLeft: function() {
-        //this.navigateTabNav(1);
-      },
-    },
-    backKeyListener: function() {
-      this.components = [];
-    }
-  });
 
   const onlineGames = new Kai({
     name: 'onlineGames',
@@ -1163,7 +1150,7 @@ window.addEventListener("load", function() {
           color: this.data.color,
           variant: this.data.variant
         }
-        console.log(opts);
+        // console.log(opts);
         if (opts['clock_limit'] < 480) {
           this.$router.showToast('Minimum 8m');
           return
@@ -1176,7 +1163,7 @@ window.addEventListener("load", function() {
             this.data.response = res.response;
           })
           .catch((e) => {
-            console.log(e);
+            // console.log(e);
             this.$router.showToast('Error');
             this.$router.hideLoading();
             this.data.isSeek = false;
@@ -1329,7 +1316,7 @@ window.addEventListener("load", function() {
           color: this.data.color,
           variant: this.data.variant
         }
-        console.log(this.data.username, opts);
+        // console.log(this.data.username, opts);
         if (opts['clock_limit'] < 480) {
           this.$router.showToast('Minimum 8m');
           return
@@ -1343,7 +1330,7 @@ window.addEventListener("load", function() {
             this.$router.setSoftKeyLeftText('Cancel');
           })
           .catch((e) => {
-            console.log(e);
+            // console.log(e);
             this.$router.showToast('Error');
           })
           .finally(() => {
@@ -1360,7 +1347,7 @@ window.addEventListener("load", function() {
                 this.$router.setSoftKeyLeftText('');
                 this.$router.showToast(log.type);
                 window['chess_events'][1].abort();
-                loadOnlineGame(this.$router, this.data.response.id, 'human', 'human', this.data.response.player, '', true);
+                loadOnlineGame(this.$router, log.game.id, 'human', 'human', 'random', '', true);
               }
             }
           } else if (log.type === 'challengeDeclined' || log.type === 'challengeCanceled') {
@@ -1454,7 +1441,7 @@ window.addEventListener("load", function() {
         var canceled = [];
         var _challenges = [];
         var logs = parseNdJSON(evt);
-        console.log(logs);
+        // console.log(logs); // dev
         var resume = true;
         logs.forEach((log) => {
           if (log.type === 'challenge') {
@@ -1475,7 +1462,7 @@ window.addEventListener("load", function() {
             _challenges.push(i);
           }
         });
-        //console.log(_challenges);
+        // console.log(_challenges);
         this.setData({challenges: _challenges});
         if (_challenges.length > 0) {
           this.$router.setSoftKeyText('Decline', '', 'Accept');
@@ -1490,14 +1477,13 @@ window.addEventListener("load", function() {
         var challenge = this.data.challenges[this.verticalNavIndex];
         if (challenge) {
           var _id = challenge.id;
-          console.log(_id);
           this.$router.showLoading();
           LICHESS_API.declineChallenge(_id)[0]
           .then((r) => {
             //console.log(r);
           })
           .catch((e) => {
-            console.log(e);
+            // console.log(e);
           })
           .finally(() => {
             this.$router.hideLoading();
@@ -1509,14 +1495,14 @@ window.addEventListener("load", function() {
         var challenge = this.data.challenges[this.verticalNavIndex];
         if (challenge) {
           this.data.selected = challenge.id;
-          console.log(this.data.selected);
+          // console.log(this.data.selected);
           this.$router.showLoading();
           LICHESS_API.acceptChallenge(this.data.selected)[0]
           .then((r) => {
             //console.log(r);
           })
           .catch((e) => {
-            console.log(e);
+            // console.log(e);
             this.data.selected = null;
           })
           .finally(() => {
@@ -1641,7 +1627,7 @@ window.addEventListener("load", function() {
           variant: this.data.variant,
           ratingRange: this.data.ratingRange
         }
-        console.log(opts);
+        // console.log(opts);
         if (LICHESS_API) {
           this.data.isSearching = true;
           this.$router.showLoading(false);
@@ -1752,9 +1738,9 @@ window.addEventListener("load", function() {
             menu = [
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
-              { "text": "Matchmaking" },
-              { "text": "Challenge Requests" },
-              { "text": "Challenge Human" },
+              //{ "text": "Matchmaking" },
+              //{ "text": "Challenge Requests" },
+              //{ "text": "Challenge Human" },
               { "text": "Challenge Computer" },
               { "text": "Local Game" },
               { "text": "Load PGN" },
@@ -1879,6 +1865,20 @@ window.addEventListener("load", function() {
   }, 500);
 
   function displayKaiAds() {
+    var display = true;
+    if (window['kaiadstimer'] == null) {
+      window['kaiadstimer'] = new Date();
+    } else {
+      var now = new Date();
+      if ((now - window['kaiadstimer']) < 300000) {
+        display = false;
+      } else {
+        window['kaiadstimer'] = now;
+      }
+    }
+    console.log('Display Ads:', display);
+    if (!display)
+      return;
     getKaiAd({
       publisher: 'ac3140f7-08d6-46d9-aa6f-d861720fba66',
       app: 'k-chess',
