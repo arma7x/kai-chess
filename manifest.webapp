@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "name": "K-Chess",
-  "description": "K-Chess",
+  "description": "K-Chess is unofficial lichess.org client for KaiOS",
   "launch_path": "/index.html",
   "theme": "#873eff",
   "theme_color": "#873eff",
@@ -37,8 +37,8 @@
   "locales": {
     "en-US": {
       "name": "K-Chess",
-      "subtitle": "K-Chess",
-      "description": "K-Chess"
+      "subtitle": "K-Chess is unofficial lichess.org client for KaiOS",
+      "description": "K-Chess is unofficial lichess.org client for KaiOS. You can play local or online game and open PGN file on your device using this app"
     }
   },
   "default_locale": "en-US"
