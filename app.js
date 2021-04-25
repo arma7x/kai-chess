@@ -1172,6 +1172,7 @@ window.addEventListener("load", function() {
       },
       onStream: function(evt) {
         var logs = parseNdJSON(evt);
+        // console.log(logs); // DEBUG
         logs.forEach((log) => {
           if (log.type === 'gameStart') {
             if (this.data.response) {
@@ -1739,7 +1740,7 @@ window.addEventListener("load", function() {
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
               //{ "text": "Matchmaking" },
-              //{ "text": "Challenge Requests" },
+              { "text": "Challenge Requests" },
               //{ "text": "Challenge Human" },
               { "text": "Challenge Computer" },
               { "text": "Local Game" },
