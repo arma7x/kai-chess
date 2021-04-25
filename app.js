@@ -1719,6 +1719,7 @@ window.addEventListener("load", function() {
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
       this.$router.setHeaderTitle('K-Chess');
+      console.log(this.scrollThreshold);
     },
     unmounted: function() {},
     methods: {},
@@ -1794,9 +1795,9 @@ window.addEventListener("load", function() {
       return false;
     },
     dPadNavListener: {
-      arrowUp: function() {},
+      //arrowUp: function() {},
       arrowRight: function() {},
-      arrowDown: function() {},
+      //arrowDown: function() {},
       arrowLeft: function() {},
     }
   });
