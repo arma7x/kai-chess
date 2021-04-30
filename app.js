@@ -698,6 +698,7 @@ window.addEventListener("load", function() {
             // console.log(logs); // dev
             if (logs[0]) {
               if (logs[0].error) {
+                this.$router.showToast(logs[0].error.toString());
                 $router.pop();
                 return
               }
@@ -1059,7 +1060,7 @@ window.addEventListener("load", function() {
     name: 'vsComputer',
     data: {
       title: 'vsComputer',
-      isSeek: false,
+      isPending: false,
       level: '1',
       'clock_limit': '',
       'clock_increment': '',
@@ -1079,7 +1080,7 @@ window.addEventListener("load", function() {
       window['chess_events'] = LICHESS_API.streamEvents(this.methods.onStream);
     },
     unmounted: function() {
-      this.data.isSeek = false;
+      this.data.isPending = false;
       this.data.response = null;
       window['chess_events'][1].abort();
     },
@@ -1136,7 +1137,7 @@ window.addEventListener("load", function() {
         }, 'Cancel', null, undefined, idx);
       },
       submit: function() {
-        if (this.data.isSeek) {
+        if (this.data.isPending) {
           return
         }
         this.data['clock_limit'] = document.getElementById('clock_limit').value;
@@ -1151,11 +1152,11 @@ window.addEventListener("load", function() {
           variant: this.data.variant
         }
         // console.log(opts);
-        if (opts['clock_limit'] < 480) {
+        if (opts['clock.limit'] < 480) {
           this.$router.showToast('Minimum 8m');
           return
         }
-        this.data.isSeek = true;
+        this.data.isPending = true;
         this.$router.showLoading();
         if (LICHESS_API) {
           LICHESS_API.challengeAI(opts)[0]
@@ -1166,7 +1167,7 @@ window.addEventListener("load", function() {
             // console.log(e);
             this.$router.showToast('Error');
             this.$router.hideLoading();
-            this.data.isSeek = false;
+            this.data.isPending = false;
           });
         }
       },
@@ -1180,7 +1181,7 @@ window.addEventListener("load", function() {
                 this.$router.showToast(log.type);
                 window['chess_events'][1].abort();
                 this.$router.hideLoading();
-                this.data.isSeek = false;
+                this.data.isPending = false;
                 loadOnlineGame(this.$router, this.data.response.id, 'human', 'human', this.data.response.player, '', true);
               }
             }
@@ -1188,7 +1189,7 @@ window.addEventListener("load", function() {
             if (this.data.response) {
               if (log.game.id === this.data.response.id) {
                 this.$router.showToast(log.type);
-                this.data.isSeek = false;
+                this.data.isPending = false;
                 this.data.response = null;
               }
             }
@@ -1318,7 +1319,7 @@ window.addEventListener("load", function() {
           variant: this.data.variant
         }
         // console.log(this.data.username, opts);
-        if (opts['clock_limit'] < 480) {
+        if (opts['clock.limit'] < 480) {
           this.$router.showToast('Minimum 8m');
           return
         }
@@ -1500,7 +1501,7 @@ window.addEventListener("load", function() {
           this.$router.showLoading();
           LICHESS_API.acceptChallenge(this.data.selected)[0]
           .then((r) => {
-            //console.log(r);
+            // console.log(r);
           })
           .catch((e) => {
             // console.log(e);
@@ -1565,6 +1566,7 @@ window.addEventListener("load", function() {
       window['chess_events'][1].abort();
       if (window['chess_seeking']) {
         window['chess_seeking'][1].abort();
+        window['chess_seeking'] = null;
       }
     },
     methods: {
@@ -1629,6 +1631,10 @@ window.addEventListener("load", function() {
           ratingRange: this.data.ratingRange
         }
         // console.log(opts);
+        if (opts['time'] < 8) {
+          this.$router.showToast('Minimum 8m');
+          return
+        }
         if (LICHESS_API) {
           this.data.isSearching = true;
           this.$router.showLoading(false);
@@ -1650,16 +1656,11 @@ window.addEventListener("load", function() {
       onStream: function(evt) {
         var logs = parseNdJSON(evt);
         logs.forEach((log) => {
-          //if (log.type === 'gameStart') {
-            //if (this.data.response) {
-              //if (log.game.id === this.data.response.challenge.id) {
-                //this.$router.setSoftKeyLeftText('');
-                //this.$router.showToast(log.type);
-                //window['chess_events'][1].abort();
-                //loadOnlineGame(this.$router, this.data.response.id, 'human', 'human', this.data.response.player, '', true);
-              //}
-            //}
-          //}
+          if (log.type === 'gameStart' && log.game.source === 'lobby') {
+            // console.log(log);
+            window['chess_events'][1].abort();
+            loadOnlineGame(this.$router, log.game.id, 'human', 'human', 'white', '', true);
+          }
         });
       }
     },
@@ -1671,6 +1672,7 @@ window.addEventListener("load", function() {
         }
         if (window['chess_seeking']) {
           window['chess_seeking'][1].abort();
+          window['chess_seeking'] = null;
         }
       },
       center: function() {
@@ -1719,7 +1721,6 @@ window.addEventListener("load", function() {
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
       this.$router.setHeaderTitle('K-Chess');
-      console.log(this.scrollThreshold);
     },
     unmounted: function() {},
     methods: {},
@@ -1740,7 +1741,7 @@ window.addEventListener("load", function() {
             menu = [
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
-              //{ "text": "Matchmaking" },
+              { "text": "Matchmaking" },
               { "text": "Challenge Requests" },
               //{ "text": "Challenge Human" },
               { "text": "Challenge Computer" },
