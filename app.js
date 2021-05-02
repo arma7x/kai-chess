@@ -1735,7 +1735,8 @@ window.addEventListener("load", function() {
             { "text": "Help & Support" },
             { "text": "Login Lichess.org" },
             { "text": "Local Game" },
-            { "text": "Load PGN" }
+            { "text": "Load PGN" },
+            { "text": "Kill App" }
           ];
           if (res) {
             menu = [
@@ -1747,7 +1748,8 @@ window.addEventListener("load", function() {
               { "text": "Challenge Computer" },
               { "text": "Local Game" },
               { "text": "Load PGN" },
-              { "text": "Logout" }
+              { "text": "Logout" },
+              { "text": "Kill App" }
             ];
             LICHESS_API = new Lichess(res.access_token);
             LICHESS_API.me()[0]
@@ -1782,6 +1784,8 @@ window.addEventListener("load", function() {
                 this.$router.push('helpSupportPage');
               } else if (selected.text === 'Local Game') {
                 this.$router.push('newLocalGame');
+              } else if (selected.text === 'Kill App') {
+                window.close();
               }
             }, 101);
           }, () => {}, 0);
