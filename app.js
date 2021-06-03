@@ -1245,7 +1245,7 @@ window.addEventListener("load", function() {
     templateUrl: document.location.origin + '/templates/vsHuman.html',
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
-      this.$router.setHeaderTitle('Challenge Human');
+      this.$router.setHeaderTitle('Send Challenge Requests');
       if (LICHESS_API == null) {
         return
       }
@@ -1253,7 +1253,14 @@ window.addEventListener("load", function() {
     },
     unmounted: function() {
       this.data.isPending = false;
-      this.data.response = null;
+      if (this.data.response) {
+        const id = this.data.response.challenge.id;
+        this.data.response = null;
+        LICHESS_API.cancelChallenge(id)[0]
+        .finally(() => {
+          localforage.removeItem('LICHESS_VS_HUMAN');
+        });
+      }
       window['chess_events'][1].abort();
     },
     methods: {
@@ -1330,6 +1337,7 @@ window.addEventListener("load", function() {
             this.data.response = res.response;
             this.data.isPending = true;
             this.$router.setSoftKeyLeftText('Cancel');
+            localforage.setItem('LICHESS_VS_HUMAN', this.data.response.challenge.id);
           })
           .catch((e) => {
             // console.log(e);
@@ -1346,6 +1354,8 @@ window.addEventListener("load", function() {
           if (log.type === 'gameStart') {
             if (this.data.response) {
               if (log.game.id === this.data.response.challenge.id) {
+                this.data.response = null
+                // localforage.removeItem('LICHESS_VS_HUMAN');
                 this.$router.setSoftKeyLeftText('');
                 this.$router.showToast(log.type);
                 window['chess_events'][1].abort();
@@ -1375,6 +1385,7 @@ window.addEventListener("load", function() {
           this.$router.showLoading();
           LICHESS_API.cancelChallenge(this.data.response.challenge.id)[0]
           .finally(() => {
+            localforage.removeItem('LICHESS_VS_HUMAN');
             this.$router.hideLoading();
           });
         }
@@ -1426,7 +1437,7 @@ window.addEventListener("load", function() {
     templateUrl: document.location.origin + '/templates/challengeRequest.html',
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
-      this.$router.setHeaderTitle('Challenge Requests');
+      this.$router.setHeaderTitle('Incoming Challenge Requests');
       if (LICHESS_API == null) {
         return
       }
@@ -1555,7 +1566,7 @@ window.addEventListener("load", function() {
     templateUrl: document.location.origin + '/templates/matchmaking.html',
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
-      this.$router.setHeaderTitle('Matchmaking');
+      this.$router.setHeaderTitle('Public Matchmaking');
       if (LICHESS_API == null) {
         return
       }
@@ -1721,6 +1732,40 @@ window.addEventListener("load", function() {
     mounted: function() {
       navigator.spatialNavigationEnabled = false;
       this.$router.setHeaderTitle('K-Chess');
+      localforage.getItem('LICHESS_ACCESS_TOKEN')
+      .then((res) => {
+        localforage.getItem('LICHESS_VS_HUMAN')
+        .then((game_id) => {
+          if (game_id) {
+            // console.log('GC', game_id);
+            _ = new Lichess(res.access_token);
+            const pending = _.streamBoardState(game_id, (evt) => {
+              const games = parseNdJSON(evt);
+              for (var x in games) {
+                if (games[x].id === game_id) {
+                  this.$router.showToast('Check Ongoing Games');
+                  // console.log(game_id, 'Ongoing Games 0');
+                  pending[1].abort();
+                  break
+                }
+              }
+            });
+            pending[0].then((res) => {
+              this.$router.showToast('Check Ongoing Games');
+              // console.log(game_id, 'Ongoing Games 1');
+            })
+            .catch((err) => {
+              // console.log(game_id, 'CANCELLED');
+              _.cancelChallenge(game_id)[0]
+            })
+            .finally(() => {
+              localforage.removeItem('LICHESS_VS_HUMAN');
+            })
+          } else {
+            // console.log('NO LICHESS_VS_HUMAN');
+          }
+        });
+      })
     },
     unmounted: function() {},
     methods: {},
@@ -1742,9 +1787,9 @@ window.addEventListener("load", function() {
             menu = [
               { "text": "Help & Support" },
               { "text": "Ongoing Games" },
-              { "text": "Matchmaking" },
-              { "text": "Challenge Requests" },
-              //{ "text": "Challenge Human" },
+              { "text": "Public Matchmaking" },
+              { "text": "Incoming Challenge Requests" },
+              { "text": "Send Challenge Requests" },
               { "text": "Challenge Computer" },
               { "text": "Local Game" },
               { "text": "Load PGN" },
@@ -1763,13 +1808,13 @@ window.addEventListener("load", function() {
                 loginPage(this.$router);
               } else if (selected.text === 'Ongoing Games') {
                 this.$router.push('onlineGames');
-              } else if (selected.text === 'Matchmaking') {
+              } else if (selected.text === 'Public Matchmaking') {
                 this.$router.push('matchmaking');
-              } else if (selected.text === 'Challenge Requests') {
+              } else if (selected.text === 'Incoming Challenge Requests') {
                 this.$router.push('challengeRequest');
               } else if (selected.text === 'Challenge Computer') {
                 this.$router.push('vsComputer');
-              } else if (selected.text === 'Challenge Human') {
+              } else if (selected.text === 'Send Challenge Requests') {
                 this.$router.push('vsHuman');
               } else if (selected.text === 'Load PGN') {
                 this.$router.push('pgnFiles');

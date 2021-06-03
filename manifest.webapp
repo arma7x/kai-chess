@@ -1,5 +1,5 @@
 {
-  "version": "1.1.1",
+  "version": "1.2.0",
   "name": "K-Chess",
   "description": "K-Chess is unofficial lichess.org client for KaiOS",
   "launch_path": "/index.html",
@@ -7,7 +7,7 @@
   "theme_color": "#873eff",
   "background_color": "#873eff",
   "categories": [
-    "utilities"
+    "games"
   ],
   "icons": {
     "56": "/icons/icon56x56.png",
