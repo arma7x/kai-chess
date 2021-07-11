@@ -1,8 +1,44 @@
+const CLIENT_ID = "bXKD7cYJPPMzmlfk";
+const REDIRECT_URL = 'https://malaysiaapi.herokuapp.com/lichess/api/v1/redirect';
+
+const createQueryString = (queries) => {
+  if (Object.keys(queries).length > 0) {
+    var formBody = [];
+    for (var property in queries) {
+      var encodedKey = encodeURIComponent(property);
+      var encodedValue = encodeURIComponent(queries[property]);
+      formBody.push(encodedKey + "=" + encodedValue);
+    }
+    formBody = formBody.join("&");
+    return formBody;
+  }
+  return '';
+}
+
+const base64URLEncode = (str) => {
+  return str.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+const sha256 = (buffer) => CryptoJS.SHA256(buffer).toString();
+
+const bufferToHex = (buffer) => {
+  var s = '', h = '0123456789abcdef';
+  (new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; });
+  return s;
+}
+
+const createVerifier = () =>  {
+  var array = new Uint8Array(32);
+  var buf = window.crypto.getRandomValues(array);
+  return base64URLEncode(bufferToHex(buf));
+}
+
+const createChallenge = (verifier) => base64URLEncode(sha256(verifier));
+
 window.addEventListener("load", function() {
 
   localforage.setDriver(localforage.LOCALSTORAGE);
 
-  const CLIENT_ID = "bXKD7cYJPPMzmlfk";
   const SCOPE = 'challenge:write challenge:read board:play';
   var IFRAME_TIMER;
   var LICHESS_API = null;
@@ -67,7 +103,18 @@ window.addEventListener("load", function() {
     var ping = new XMLHttpRequest({ mozSystem: true });
     ping.open('GET', 'https://malaysiaapi.herokuapp.com/', true);
     ping.send();
-    var url = `https://oauth.lichess.org/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=https%3A%2F%2Fmalaysiaapi.herokuapp.com%2Flichess%2Fapi%2Fv1%2Fredirect&scope=${SCOPE}`
+    const verifier = createVerifier()
+    const challenge = createChallenge(verifier)
+    const _query = {
+      response_type: 'code',
+      client_id: CLIENT_ID,
+      redirect_uri: REDIRECT_URL,
+      scope: 'challenge:write challenge:read board:play',
+      code_challenge_method: 'S256',
+      code_challenge: challenge
+    }
+    var url = `https://lichess.org/oauth?${createQueryString(_query)}`
+    console.log(url);
     $router.push(new Kai({
       name: 'loginPage',
       data: {
@@ -103,12 +150,19 @@ window.addEventListener("load", function() {
         var shadow = document.createElement('shadow');
         root2.appendChild(shadow);
         loginTab.iframe.addEventListener('mozbrowserlocationchange', function (e) {
-          if (e.detail.url.indexOf('https://malaysiaapi.herokuapp.com/lichess/api/v1/redirect') > -1) {
-            const codeToken = getURLParam('code', window['loginTab'].url.url);
-            if (codeToken.length > 0) {
+          if (e.detail.url.indexOf(REDIRECT_URL) > -1) {
+            const authCode = getURLParam('code', window['loginTab'].url.url);
+            const body = {
+              grant_type: 'authorization_code',
+              redirect_uri: REDIRECT_URL,
+              client_id: CLIENT_ID,
+              code: authCode,
+              code_verifier: verifier
+            }
+            if (authCode.length > 0) {
               setTimeout(() => {
                 var oauthAuthorize = new XMLHttpRequest({ mozSystem: true });
-                oauthAuthorize.open('GET', 'https://malaysiaapi.herokuapp.com/lichess/api/v1/exchange_token?code=' + codeToken[0], true);
+                oauthAuthorize.open('POST', 'https://lichess.org/api/token', true);
                 oauthAuthorize.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                 oauthAuthorize.setRequestHeader("X-Accept", 'application/json');
                 oauthAuthorize.onreadystatechange = function() {
@@ -135,7 +189,7 @@ window.addEventListener("load", function() {
                   }
                 }
                 $router.showLoading();
-                oauthAuthorize.send();
+                oauthAuthorize.send(JSON.stringify(body));
               }, 500);
             }
           }
