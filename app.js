@@ -15,11 +15,7 @@ const createQueryString = (queries) => {
   return '';
 }
 
-const base64URLEncode = (str) => {
-  return str.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-const sha256 = (buffer) => CryptoJS.SHA256(buffer).toString();
+const sha256 = (str) => CryptoJS.SHA256(str).toString();
 
 const bufferToHex = (buffer) => {
   var s = '', h = '0123456789abcdef';
@@ -30,10 +26,10 @@ const bufferToHex = (buffer) => {
 const createVerifier = () =>  {
   var array = new Uint8Array(32);
   var buf = window.crypto.getRandomValues(array);
-  return base64URLEncode(bufferToHex(buf));
+  return bufferToHex(buf);
 }
 
-const createChallenge = (verifier) => base64URLEncode(sha256(verifier));
+const createChallenge = (verifier) => sha256(verifier);
 
 window.addEventListener("load", function() {
 
