@@ -15,21 +15,22 @@ const createQueryString = (queries) => {
   return '';
 }
 
-const sha256 = (str) => CryptoJS.SHA256(str).toString();
+const base64URLEncode = (str) => {
+  return str.toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
 
-const bufferToHex = (buffer) => {
-  var s = '', h = '0123456789abcdef';
-  (new Uint8Array(buffer)).forEach((v) => { s += h[v >> 4] + h[v & 15]; });
-  return s;
+const createChallenge = (verifier) => {
+  return base64URLEncode(CryptoJS.enc.Base64.stringify(CryptoJS.SHA256(verifier)));
 }
 
 const createVerifier = () =>  {
   var array = new Uint8Array(32);
   var buf = window.crypto.getRandomValues(array);
-  return bufferToHex(buf);
+  return base64URLEncode(buffer.Buffer.from(buf.buffer));
 }
-
-const createChallenge = (verifier) => sha256(verifier);
 
 window.addEventListener("load", function() {
 
@@ -101,6 +102,8 @@ window.addEventListener("load", function() {
     ping.send();
     const verifier = createVerifier()
     const challenge = createChallenge(verifier)
+    console.log(`verifier`, verifier);
+    console.log(`challenge`, challenge);
     const _query = {
       response_type: 'code',
       client_id: CLIENT_ID,
@@ -148,11 +151,14 @@ window.addEventListener("load", function() {
         loginTab.iframe.addEventListener('mozbrowserlocationchange', function (e) {
           if (e.detail.url.indexOf(REDIRECT_URL) > -1) {
             const authCode = getURLParam('code', window['loginTab'].url.url);
+            console.log('-----------------');;
+            console.log('code', authCode[0]);
+            console.log('verifier', verifier);
             const body = {
               grant_type: 'authorization_code',
               redirect_uri: REDIRECT_URL,
               client_id: CLIENT_ID,
-              code: authCode,
+              code: authCode[0],
               code_verifier: verifier
             }
             if (authCode.length > 0) {
@@ -165,7 +171,7 @@ window.addEventListener("load", function() {
                   if(oauthAuthorize.readyState == 4 && oauthAuthorize.status == 200) {
                     if (oauthAuthorize.response) {
                       var obj = JSON.parse(oauthAuthorize.response);
-                      localforage.setItem('LICHESS_ACCESS_TOKEN', obj.data)
+                      localforage.setItem('LICHESS_ACCESS_TOKEN', obj)
                       $router.showToast('Login Success');
                       $router.hideLoading()
                       $router.pop();
