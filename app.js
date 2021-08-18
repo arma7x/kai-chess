@@ -103,8 +103,8 @@ window.addEventListener("load", function() {
     ping.send();
     const verifier = createVerifier()
     const challenge = createChallenge(verifier)
-    console.log(`verifier`, verifier);
-    console.log(`challenge`, challenge);
+    // console.log(`verifier`, verifier);
+    // console.log(`challenge`, challenge);
     const _query = {
       response_type: 'code',
       client_id: CLIENT_ID,
@@ -114,7 +114,7 @@ window.addEventListener("load", function() {
       code_challenge: challenge
     }
     var url = `https://lichess.org/oauth?${createQueryString(_query)}`
-    console.log(url);
+    // console.log(url);
     $router.push(new Kai({
       name: 'loginPage',
       data: {
@@ -152,9 +152,9 @@ window.addEventListener("load", function() {
         loginTab.iframe.addEventListener('mozbrowserlocationchange', function (e) {
           if (e.detail.url.indexOf(REDIRECT_URL) > -1) {
             const authCode = getURLParam('code', window['loginTab'].url.url);
-            console.log('-----------------');;
-            console.log('code', authCode[0]);
-            console.log('verifier', verifier);
+            // console.log('-----------------');;
+            // console.log('code', authCode[0]);
+            // console.log('verifier', verifier);
             const body = {
               grant_type: 'authorization_code',
               redirect_uri: REDIRECT_URL,
@@ -652,7 +652,7 @@ window.addEventListener("load", function() {
     );
   }
 
-  const chatHistory = function($router, $state) {
+  const chatHistory = function($router, $state, cb) {
     $router.showBottomSheet(
       new Kai({
         name: 'chatHistory',
@@ -660,7 +660,7 @@ window.addEventListener("load", function() {
           title: 'chatHistory',
           logs: [],
         },
-        template: `<div id="chatContainer" class="kui-flex-wrap" style="background-color:#fff;overflow:hidden!important;height:264px;">
+        template: `<div id="chatContainer" class="kui-flex-wrap" style="font-size:85%;background-color:#fff;overflow:hidden!important;height:264px;">
           {{#logs}}
             <div class="chatNav" style="margin:2px;"><b>{{username}}</b>: {{text}}</div>
           {{/logs}}
@@ -686,10 +686,16 @@ window.addEventListener("load", function() {
             }
           }
         },
-        softKeyText: { left: '', center: '', right: '' },
+        softKeyText: { left: '', center: cb ? 'REPLY' : '', right: '' },
         softKeyListener: {
           left: function() {},
-          center: function() {},
+          center: function() {
+            $router.hideBottomSheet();
+            if (cb)
+              setTimeout(() => {
+                cb(true);
+              }, 200);
+          },
           right: function() {}
         },
         dPadNavListener: {
@@ -974,7 +980,6 @@ window.addEventListener("load", function() {
                   }
                 })
                 state.setState('CHAT_LOGS', chats);
-                console.log(state.getState('CHAT_LOGS'));
               }
             }
           },
@@ -984,6 +989,77 @@ window.addEventListener("load", function() {
             .finally(() => {
               this.$router.hideLoading();
             });
+          },
+          openChatInput: function(relaunch = false) {
+            const inputDialog = Kai.createDialog('Chat', '<div><input id="message-input" type="text" class="kui-input" placeholder="Please be nice in the chat!"/></div>', null, '', undefined, '', undefined, '', undefined, undefined, this.$router);
+            inputDialog.mounted = () => {
+              setTimeout(() => {
+                setTimeout(() => {
+                  this.$router.setSoftKeyText('Cancel' , '', 'Send');
+                }, 103);
+                const MSG = document.getElementById('message-input');
+                if (!MSG) {
+                  return;
+                }
+                MSG.focus();
+                MSG.value = ""
+                MSG.addEventListener('keydown', (evt) => {
+                  switch (evt.key) {
+                    case 'Backspace':
+                    case 'EndCall':
+                      if (document.activeElement.value.length === 0) {
+                        this.$router.hideBottomSheet();
+                        setTimeout(() => {
+                          MSG.blur();
+                        }, 100);
+                      }
+                      break
+                    case 'SoftRight':
+                      const msg_text = MSG.value.trim();
+                      if (msg_text != null && msg_text !== "" && msg_text.length > 0) {
+                        LICHESS_API.writeChat(game_id, {room: "player", text: msg_text})[0]
+                        .then(() => {
+                          this.$router.showToast("Delivered");
+                        })
+                        .catch((e) => {
+                          if (e.response.error) {
+                            this.$router.showToast(e.response.error);
+                          } else {
+                            console.log(e);
+                            this.$router.showToast("Error");
+                          }
+                        });
+                      }
+                      setTimeout(() => {
+                        MSG.blur();
+                        this.$router.hideBottomSheet();
+                        if (relaunch)
+                          setTimeout(() => {
+                            chatHistory(this.$router, state, this.methods.openChatInput);
+                          }, 100);
+                      }, 100);
+                      break
+                    case 'SoftLeft':
+                      setTimeout(() => {
+                        MSG.blur();
+                        this.$router.hideBottomSheet();
+                      }, 100);
+                      break
+                  }
+                });
+              });
+            }
+            inputDialog.dPadNavListener = {
+              arrowUp: function() {
+                const MSG = document.getElementById('message-input');
+                MSG.focus();
+              },
+              arrowDown: function() {
+                const MSG = document.getElementById('message-input');
+                MSG.focus();
+              }
+            }
+            this.$router.showBottomSheet(inputDialog);
           }
         },
         softKeyText: { left: local_game ? 'Menu' : '', center: local_game ? 'MOVE' : '', right: '' },
@@ -1020,73 +1096,9 @@ window.addEventListener("load", function() {
                   this.$router.hideLoading();
                 });
               } else if (selected.text === "Chat History") {
-                chatHistory(this.$router, state);
+                chatHistory(this.$router, state, this.methods.openChatInput);
               } else if (selected.text === "Send Message") {
-                const inputDialog = Kai.createDialog('Chat', '<div><input id="message-input" type="text" class="kui-input" placeholder="Please be nice in the chat!"/></div>', null, '', undefined, '', undefined, '', undefined, undefined, this.$router);
-                inputDialog.mounted = () => {
-                  setTimeout(() => {
-                    setTimeout(() => {
-                      this.$router.setSoftKeyText('Cancel' , '', 'Send');
-                    }, 103);
-                    const MSG = document.getElementById('message-input');
-                    if (!MSG) {
-                      return;
-                    }
-                    MSG.focus();
-                    MSG.value = ""
-                    MSG.addEventListener('keydown', (evt) => {
-                      switch (evt.key) {
-                        case 'Backspace':
-                        case 'EndCall':
-                          if (document.activeElement.value.length === 0) {
-                            this.$router.hideBottomSheet();
-                            setTimeout(() => {
-                              MSG.blur();
-                            }, 100);
-                          }
-                          break
-                        case 'SoftRight':
-                          const msg_text = MSG.value.trim();
-                          if (msg_text != null && msg_text !== "" && msg_text.length > 0) {
-                            LICHESS_API.writeChat(game_id, {room: "player", text: msg_text})[0]
-                            .then(() => {
-                              this.$router.showToast("Delivered");
-                            })
-                            .catch((e) => {
-                              if (e.response.error) {
-                                this.$router.showToast(e.response.error);
-                              } else {
-                                console.log(e);
-                                this.$router.showToast("Error");
-                              }
-                            });
-                          }
-                          setTimeout(() => {
-                            MSG.blur();
-                            this.$router.hideBottomSheet();
-                          }, 100);
-                          break
-                        case 'SoftLeft':
-                          setTimeout(() => {
-                            MSG.blur();
-                            this.$router.hideBottomSheet();
-                          }, 100);
-                          break
-                      }
-                    });
-                  });
-                }
-                inputDialog.dPadNavListener = {
-                  arrowUp: function() {
-                    const MSG = document.getElementById('message-input');
-                    MSG.focus();
-                  },
-                  arrowDown: function() {
-                    const MSG = document.getElementById('message-input');
-                    MSG.focus();
-                  }
-                }
-                this.$router.showBottomSheet(inputDialog);
+                this.methods.openChatInput(false);
               }
             }, () => {}, 0);
           },
@@ -1349,7 +1361,6 @@ window.addEventListener("load", function() {
           color: this.data.color,
           variant: this.data.variant
         }
-        // console.log(opts);
         if (opts['clock.limit'] < 480) {
           this.$router.showToast('Minimum 8m');
           return
@@ -1527,7 +1538,6 @@ window.addEventListener("load", function() {
           color: this.data.color,
           variant: this.data.variant
         }
-        // console.log(this.data.username, opts);
         if (opts['clock.limit'] < 480) {
           this.$router.showToast('Minimum 8m');
           return
