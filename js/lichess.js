@@ -41,7 +41,6 @@ const Lichess = (function() {
     return Lichess.xhr(`POST`, `https://lichess.org/api/board/game/${gameId}/draw/${accept}`, {}, {}, this.headers);
   }
 
-  // new
   Lichess.prototype.writeChat = function(gameId, opts) {
     var headers = JSON.parse(JSON.stringify(this.headers));
     headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';

@@ -652,6 +652,65 @@ window.addEventListener("load", function() {
     );
   }
 
+  const chatHistory = function($router, $state) {
+    $router.showBottomSheet(
+      new Kai({
+        name: 'chatHistory',
+        data: {
+          title: 'chatHistory',
+          logs: [],
+        },
+        template: `<div id="chatContainer" class="kui-flex-wrap" style="background-color:#fff;overflow:hidden!important;height:264px;">
+          {{#logs}}
+            <div class="chatNav" style="margin:2px;"><b>{{username}}</b>: {{text}}</div>
+          {{/logs}}
+        </div>`,
+        mounted: function() {
+          var logs = []
+          for (var i=0;i<100;i++) {
+            logs.push({username: 'Test', text: `${i}, This is text, This is text, This is text, This is text, This is text, This is text, This is text`});
+          }
+          this.setData({ logs: logs });
+          //this.setData({ logs: state.getState('CHAT_LOGS') });
+          $state.addStateListener('CHAT_LOGS', this.methods.chatLogs);
+          setTimeout(this.methods.scrollToLast, 500);
+        },
+        unmounted: function() {
+          $state.removeStateListener('CHAT_LOGS', this.methods.chatLogs);
+        },
+        methods: {
+          chatLogs: function(logs) {
+            //this.setData({ logs: logs });
+            setTimeout(this.methods.scrollToLast, 500);
+          },
+          scrollToLast: function() {
+            const logs = document.querySelectorAll('.chatNav');
+            const last = logs[logs.length - 1];
+            if (last.offsetTop >= last.parentElement.clientHeight) {
+              last.parentElement.scrollTop = last.offsetTop;
+            }
+          }
+        },
+        softKeyText: { left: '', center: '', right: '' },
+        softKeyListener: {
+          left: function() {},
+          center: function() {},
+          right: function() {}
+        },
+        dPadNavListener: {
+          arrowUp: function() {
+            const DOM = document.getElementById('chatContainer');
+            DOM.scrollTop -= 20;
+          },
+          arrowDown: function() {
+            const DOM = document.getElementById('chatContainer');
+            DOM.scrollTop += 20;
+          }
+        }
+      })
+    );
+  }
+
   const loadOnlineGame = function ($router, game_id, p1='human', p2='human', pov='white', fen='', local_game = true) {
 
     var GAME_INIT = true;
@@ -753,7 +812,6 @@ window.addEventListener("load", function() {
         methods: {
           onStream: function(evt) {
             var logs = parseNdJSON(evt);
-            console.log(logs);
             // console.log(logs); // dev
             if (logs[0]) {
               if (logs[0].error) {
@@ -967,7 +1025,7 @@ window.addEventListener("load", function() {
                   this.$router.hideLoading();
                 });
               } else if (selected.text === "Chat History") {
-                
+                chatHistory(this.$router, state);
               } else if (selected.text === "Send Message") {
                 const inputDialog = Kai.createDialog('Chat', '<div><input id="message-input" type="text" class="kui-input" placeholder="Please be nice in the chat!"/></div>', null, '', undefined, '', undefined, '', undefined, undefined, this.$router);
                 inputDialog.mounted = () => {
@@ -995,7 +1053,18 @@ window.addEventListener("load", function() {
                         case 'SoftRight':
                           const msg_text = MSG.value.trim();
                           if (msg_text != null && msg_text !== "" && msg_text.length > 0) {
-                            LICHESS_API.writeChat(game_id, {room: "player", text: msg_text});
+                            LICHESS_API.writeChat(game_id, {room: "player", text: msg_text})[0]
+                            .then(() => {
+                              this.$router.showToast("Delivered");
+                            })
+                            .catch((e) => {
+                              if (e.response.error) {
+                                this.$router.showToast(e.response.error);
+                              } else {
+                                console.log(e);
+                                this.$router.showToast("Error");
+                              }
+                            });
                           }
                           setTimeout(() => {
                             MSG.blur();
