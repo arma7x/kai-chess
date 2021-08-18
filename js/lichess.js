@@ -41,7 +41,14 @@ const Lichess = (function() {
     return Lichess.xhr(`POST`, `https://lichess.org/api/board/game/${gameId}/draw/${accept}`, {}, {}, this.headers);
   }
 
-  Lichess.prototype.seekChallenge = function(opts, onStream = function(){}) {
+  // new
+  Lichess.prototype.writeChat = function(gameId, opts) {
+    var headers = JSON.parse(JSON.stringify(this.headers));
+    headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+    return Lichess.xhr(`POST`, `https://lichess.org/api/board/game/${gameId}/chat`, opts, {}, headers);
+  }
+
+  Lichess.prototype.seekChallenge = function(opts) {
     var headers = JSON.parse(JSON.stringify(this.headers));
     headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
     return Lichess.xhr(`POST`, `https://lichess.org/api/board/seek`, opts, {}, headers);

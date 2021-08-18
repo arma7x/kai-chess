@@ -166,7 +166,7 @@ const KaiRouter = (function() {
     if (pathname.length === 0) {
       pathname = '/index.html';
     }
-    if ((paths.length > 0 && this.stack.length) > 0 && (paths.length === this.stack.length)) {
+    if ((paths.length > 0 && this.stack.length > 0) && (paths.length === this.stack.length)) {
       var r = false;
       if ((this.stack.length - 1) > 0) {
         paths.pop();
@@ -223,6 +223,10 @@ const KaiRouter = (function() {
     } else {
       DOM.classList.add('kui-overlay-visible-no-sk');
     }
+    if (component.verticalNavIndex > -1) {
+      component.verticalNavIndex -= 1;
+      component.dPadNavListener.arrowDown();
+    }
   }
 
   KaiRouter.prototype.hideBottomSheet = function() {
@@ -250,10 +254,16 @@ const KaiRouter = (function() {
     } else {
       DOM.classList.remove('kui-overlay-visible-no-sk');
     }
+    setTimeout(() => {
+      if (component.verticalNavIndex > -1 && (this.stack[this.stack.length - 1].name === component.name)) {
+        component.verticalNavIndex -= 1;
+        component.dPadNavListener.arrowDown();
+      }
+    }, 100);
   }
 
   KaiRouter.prototype.showDialog = function(title, body, dataCb, positiveText, positiveCb, negativeText, negativeCb, neutralText, neutralCb, closeCb) {
-    if (document.activeElement.tagName === 'INPUT') {
+    if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
       document.activeElement.blur();
     }
     const dialog = Kai.createDialog(title, body, dataCb, positiveText, positiveCb, negativeText, negativeCb, neutralText, neutralCb, closeCb, this);
@@ -265,7 +275,7 @@ const KaiRouter = (function() {
   }
 
   KaiRouter.prototype.showOptionMenu = function(title, options, selectText, selectCb, closeCb, verticalNavIndex = -1) {
-    if (document.activeElement.tagName === 'INPUT') {
+    if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
       document.activeElement.blur();
     }
     const option_menu = Kai.createOptionMenu(title, options, selectText, selectCb, closeCb, verticalNavIndex, this);
@@ -277,7 +287,7 @@ const KaiRouter = (function() {
   }
 
   KaiRouter.prototype.showSingleSelector = function(title, options, selectText, selectCb, cancelText, cancelCb, closeCb, verticalNavIndex = -1) {
-    if (document.activeElement.tagName === 'INPUT') {
+    if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
       document.activeElement.blur();
     }
     const single_selector = Kai.createSingleSelector(title, options, selectText, selectCb, cancelText, cancelCb, closeCb, verticalNavIndex, this);
@@ -289,7 +299,7 @@ const KaiRouter = (function() {
   }
 
   KaiRouter.prototype.showMultiSelector = function(title, options, selectText, selectCb, saveText, saveCb, cancelText, cancelCb, closeCb, verticalNavIndex = -1) {
-    if (document.activeElement.tagName === 'INPUT') {
+    if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
       document.activeElement.blur();
     }
     const multi_selector = Kai.createMultiSelector(title, options, selectText, selectCb, saveText, saveCb, cancelText, cancelCb, closeCb, verticalNavIndex, this);
@@ -301,7 +311,7 @@ const KaiRouter = (function() {
   }
 
   KaiRouter.prototype.showDatePicker = function(year, month, day = 1, selectCb, closeCb) {
-    if (document.activeElement.tagName === 'INPUT') {
+    if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
       document.activeElement.blur();
     }
     const date_picker = Kai.createDatePicker(year, month, day, selectCb, closeCb, this);
@@ -313,7 +323,7 @@ const KaiRouter = (function() {
   }
 
   KaiRouter.prototype.showTimePicker = function(hour, minute, is12H = true, selectCb, closeCb) {
-    if (document.activeElement.tagName === 'INPUT') {
+    if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
       document.activeElement.blur();
     }
     const time_picker = Kai.createTimePicker(hour, minute, is12H, selectCb, closeCb, this);
@@ -417,7 +427,7 @@ const KaiRouter = (function() {
 
   KaiRouter.prototype.clickLeft = function() {
     if (this.stack[this.stack.length - 1]) {
-      if (document.activeElement.tagName === 'INPUT') {
+      if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
         if (typeof this.stack[this.stack.length - 1].softKeyInputFocusListener.left === 'function') {
           this.stack[this.stack.length - 1].softKeyInputFocusListener.left();
         }
@@ -431,7 +441,7 @@ const KaiRouter = (function() {
 
   KaiRouter.prototype.clickCenter = function() {
     if (this.stack[this.stack.length - 1]) {
-      if (document.activeElement.tagName === 'INPUT') {
+      if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
         if (typeof this.stack[this.stack.length - 1].softKeyInputFocusListener.center === 'function') {
           this.stack[this.stack.length - 1].softKeyInputFocusListener.center();
         }
@@ -445,7 +455,7 @@ const KaiRouter = (function() {
 
   KaiRouter.prototype.clickRight = function() {
     if (this.stack[this.stack.length - 1]) {
-      if (document.activeElement.tagName === 'INPUT') {
+      if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
         if (typeof this.stack[this.stack.length - 1].softKeyInputFocusListener.right === 'function') {
           this.stack[this.stack.length - 1].softKeyInputFocusListener.right();
         }
@@ -508,7 +518,7 @@ const KaiRouter = (function() {
     switch(e.key) {
       case 'Backspace':
       case 'EndCall':
-        if (document.activeElement.tagName === 'INPUT') {
+        if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
           if (document.activeElement.value.length === 0) {
             document.activeElement.blur();
           }
@@ -551,7 +561,7 @@ const KaiRouter = (function() {
         }
         break
       case 'ArrowUp':
-        if (document.activeElement.tagName === 'INPUT') {
+        if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
           document.activeElement.blur();
         }
         if (_router) {
@@ -559,7 +569,7 @@ const KaiRouter = (function() {
         }
         break
       case 'ArrowRight':
-        if (document.activeElement.tagName === 'INPUT') {
+        if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
           return;
         }
         if (_router) {
@@ -567,7 +577,7 @@ const KaiRouter = (function() {
         }
         break
       case 'ArrowDown':
-        if (document.activeElement.tagName === 'INPUT') {
+        if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
           document.activeElement.blur();
         }
         if (_router) {
@@ -575,7 +585,7 @@ const KaiRouter = (function() {
         }
         break
       case 'ArrowLeft':
-        if (document.activeElement.tagName === 'INPUT') {
+        if ((document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
           return;
         }
         if (_router) {

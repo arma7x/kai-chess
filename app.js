@@ -42,6 +42,7 @@ window.addEventListener("load", function() {
 
   const state = new KaiState({
     'SEEK_OPTIONS': {},
+    'CHAT_LOGS': [],
   });
 
   const parseNdJSON = (jsonString) => {
@@ -737,6 +738,7 @@ window.addEventListener("load", function() {
           window['chess_stream'] = LICHESS_API.streamBoardState(game_id, this.methods.onStream)
         },
         unmounted: function() {
+          state.setState('CHAT_LOGS', []);
           var a = document.getElementsByClassName('kui-router-m-top');
           a[0].style.marginTop = '28px';
           if (window['chess_lichess']) {
@@ -751,6 +753,7 @@ window.addEventListener("load", function() {
         methods: {
           onStream: function(evt) {
             var logs = parseNdJSON(evt);
+            console.log(logs);
             // console.log(logs); // dev
             if (logs[0]) {
               if (logs[0].error) {
@@ -904,6 +907,22 @@ window.addEventListener("load", function() {
                   }
                 }
               }
+              const history = state.getState('CHAT_LOGS');
+              const chats = logs.filter((c) => {
+                return c.type === 'chatLine'
+              });
+              if (chats.length > history.length) {
+                const last = chats[chats.length - 1];
+                localforage.getItem('LICHESS_USER')
+                .then((u) => {
+                  if (last.username !== u.username) {
+                    new Audio("/assets/sounds/notification.mp3").play();
+                    this.$router.showToast('New message');
+                  }
+                })
+                state.setState('CHAT_LOGS', chats);
+                console.log(state.getState('CHAT_LOGS'));
+              }
             }
           },
           sendDrawOffer: function(action) {
@@ -927,6 +946,8 @@ window.addEventListener("load", function() {
             if (GAME_STATUS) {
               menu.push({ "text": "Resign" });
             }
+            menu.push({ "text": "Chat History" });
+            menu.push({ "text": "Send Message" });
             if (GAME_STATUS && window['chess_lichess'].GAME.moves().length === 0) {
               menu.push({ "text": "Abort" });
             }
@@ -945,6 +966,63 @@ window.addEventListener("load", function() {
                 .finally(() => {
                   this.$router.hideLoading();
                 });
+              } else if (selected.text === "Chat History") {
+                
+              } else if (selected.text === "Send Message") {
+                const inputDialog = Kai.createDialog('Chat', '<div><input id="message-input" type="text" class="kui-input" placeholder="Please be nice in the chat!"/></div>', null, '', undefined, '', undefined, '', undefined, undefined, this.$router);
+                inputDialog.mounted = () => {
+                  setTimeout(() => {
+                    setTimeout(() => {
+                      this.$router.setSoftKeyText('Cancel' , '', 'Send');
+                    }, 103);
+                    const MSG = document.getElementById('message-input');
+                    if (!MSG) {
+                      return;
+                    }
+                    MSG.focus();
+                    MSG.value = ""
+                    MSG.addEventListener('keydown', (evt) => {
+                      switch (evt.key) {
+                        case 'Backspace':
+                        case 'EndCall':
+                          if (document.activeElement.value.length === 0) {
+                            this.$router.hideBottomSheet();
+                            setTimeout(() => {
+                              MSG.blur();
+                            }, 100);
+                          }
+                          break
+                        case 'SoftRight':
+                          const msg_text = MSG.value.trim();
+                          if (msg_text != null && msg_text !== "" && msg_text.length > 0) {
+                            LICHESS_API.writeChat(game_id, {room: "player", text: msg_text});
+                          }
+                          setTimeout(() => {
+                            MSG.blur();
+                            this.$router.hideBottomSheet();
+                          }, 100);
+                          break
+                        case 'SoftLeft':
+                          setTimeout(() => {
+                            MSG.blur();
+                            this.$router.hideBottomSheet();
+                          }, 100);
+                          break
+                      }
+                    });
+                  });
+                }
+                inputDialog.dPadNavListener = {
+                  arrowUp: function() {
+                    const MSG = document.getElementById('message-input');
+                    MSG.focus();
+                  },
+                  arrowDown: function() {
+                    const MSG = document.getElementById('message-input');
+                    MSG.focus();
+                  }
+                }
+                this.$router.showBottomSheet(inputDialog);
               }
             }, () => {}, 0);
           },
@@ -1270,12 +1348,16 @@ window.addEventListener("load", function() {
     dPadNavListener: {
       arrowUp: function() {
         this.navigateListNav(-1);
+        this.data['clock_limit'] = document.getElementById('clock_limit').value;
+        this.data['clock_increment'] = document.getElementById('clock_increment').value;
       },
       arrowRight: function() {
         //this.navigateTabNav(-1);
       },
       arrowDown: function() {
         this.navigateListNav(1);
+        this.data['clock_limit'] = document.getElementById('clock_limit').value;
+        this.data['clock_increment'] = document.getElementById('clock_increment').value;
       },
       arrowLeft: function() {
         //this.navigateTabNav(1);
@@ -1464,6 +1546,9 @@ window.addEventListener("load", function() {
         } else {
           this.$router.setSoftKeyLeftText('');
         }
+        this.data.username = document.getElementById('username').value;
+        this.data['clock_limit'] = document.getElementById('clock_limit').value;
+        this.data['clock_increment'] = document.getElementById('clock_increment').value;
       },
       arrowRight: function() {
         //this.navigateTabNav(-1);
@@ -1475,6 +1560,9 @@ window.addEventListener("load", function() {
         } else {
           this.$router.setSoftKeyLeftText('');
         }
+        this.data.username = document.getElementById('username').value;
+        this.data['clock_limit'] = document.getElementById('clock_limit').value;
+        this.data['clock_increment'] = document.getElementById('clock_increment').value;
       },
       arrowLeft: function() {
         //this.navigateTabNav(1);
@@ -1760,6 +1848,9 @@ window.addEventListener("load", function() {
         } else {
           this.$router.setSoftKeyLeftText('');
         }
+        this.data.ratingRange = document.getElementById('ratingRange').value;
+        this.data.time = document.getElementById('time').value;
+        this.data.increment = document.getElementById('increment').value;
       },
       arrowRight: function() {
         //this.navigateTabNav(-1);
@@ -1771,6 +1862,9 @@ window.addEventListener("load", function() {
         } else {
           this.$router.setSoftKeyLeftText('');
         }
+        this.data.ratingRange = document.getElementById('ratingRange').value;
+        this.data.time = document.getElementById('time').value;
+        this.data.increment = document.getElementById('increment').value;
       },
       arrowLeft: function() {
         //this.navigateTabNav(1);
@@ -1994,9 +2088,14 @@ window.addEventListener("load", function() {
       onerror: err => console.error(err),
       onready: ad => {
         ad.call('display')
-        setTimeout(() => {
+        ad.on('close', () => {
+          app.$router.hideBottomSheet();
           document.body.style.position = '';
-        }, 1000);
+        });
+        ad.on('display', () => {
+          app.$router.hideBottomSheet();
+          document.body.style.position = '';
+        });
       }
     })
   }

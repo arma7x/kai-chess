@@ -1,4 +1,4 @@
-self.importScripts('/chess.min.js');
+self.importScripts('/js/chess.min.js');
 
 onmessage = function(e) {
   if (e.data.pgn !== null && e.data.minimaxDepth >= 0) {

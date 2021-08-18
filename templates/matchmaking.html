@@ -3,37 +3,37 @@
     <li>
       <input id="ratingRange" class="matchmakingNav kui-input" type="text" style="margin:2%;width:96%;" placeholder="Rating Range(1500-1800)" value="{{ ratingRange }}"/>
     </li>
-    <li class="matchmakingNav" @click="setRated()" style="border-top:1px dashed #320374;">
+    <li class="matchmakingNav" @click="setRated()">
       <div class="kui-row-center">
         <span>Rated</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ rated }}</span>
       </div>
     </li>
-    <li class="matchmakingNav" @click="setColor()" style="border-top:1px dashed #320374;">
+    <li class="matchmakingNav" @click="setColor()">
       <div class="kui-row-center">
         <span>Color</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ color }}</span>
       </div>
     </li>
-    <li class="matchmakingNav" @click="setVariant()" style="border-top:1px dashed #320374;">
+    <li class="matchmakingNav" @click="setVariant()">
       <div class="kui-row-center">
         <span>Variant</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ variant }}</span>
       </div>
     </li>
-    <li style="border-top:1px dashed #320374;">
+    <li>
       <div class="kui-row-center">
         <span>Minutes per side</span>
         <input id="time" class="matchmakingNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="minutes" value="{{ time }}"/>
       </div>
     </li>
-    <li style="border-top:1px dashed #320374;">
+    <li>
       <div class="kui-row-center">
         <span>Increment</span>
         <input id="increment" class="matchmakingNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="seconds" value="{{ increment }}"/>
       </div>
     </li>
-    <li class="matchmakingNav" style="border-top:1px dashed #320374;" @click="submit()">
+    <li class="matchmakingNav" @click="submit()">
       <div class="kui-row-center" style="justify-content:space-around;">
         <h4>SUBMIT</h4>
       </div>

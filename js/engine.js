@@ -63,7 +63,7 @@ function createChessGame(p1='human', p2='human', pov='white', container, listene
     position: 'start'
   }
 
-  var WORKER = new Worker('/worker_ai.js')
+  var WORKER = new Worker('/js/worker_ai.js')
   BOARD = Chessboard('container', config)
 
   function getPosition(m) {

@@ -3,43 +3,43 @@
     <li>
       <input id="username" class="vsHumanNav kui-input" type="text" style="margin:2%;width:96%;" placeholder="Username" value="{{ username }}"/>
     </li>
-    <li class="vsHumanNav" @click="setRated()" style="border-top:1px dashed #320374;">
+    <li class="vsHumanNav" @click="setRated()">
       <div class="kui-row-center">
         <span>Rated</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ rated }}</span>
       </div>
     </li>
-    <li class="vsHumanNav" @click="setColor()" style="border-top:1px dashed #320374;">
+    <li class="vsHumanNav" @click="setColor()">
       <div class="kui-row-center">
         <span>Color</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ color }}</span>
       </div>
     </li>
-    <li class="vsHumanNav" @click="setVariant()" style="border-top:1px dashed #320374;">
+    <li class="vsHumanNav" @click="setVariant()">
       <div class="kui-row-center">
         <span>Variant</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ variant }}</span>
       </div>
     </li>
-    <li style="border-top:1px dashed #320374;">
+    <li>
       <div class="kui-row-center">
         <span>Minutes per side</span>
         <input id="clock_limit" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="minutes" value="{{ clock_limit }}"/>
       </div>
     </li>
-    <li style="border-top:1px dashed #320374;">
+    <li>
       <div class="kui-row-center">
         <span>Increment</span>
         <input id="clock_increment" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="seconds" value="{{ clock_increment }}"/>
       </div>
     </li>
-    <li style="border-top:1px dashed #320374;">
+    <li>
       <div class="kui-row-center">
         <span>Days per turn</span>
         <input id="days" class="vsHumanNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="days" value="{{ days }}"/>
       </div>
     </li>
-    <li class="vsHumanNav" style="border-top:1px dashed #320374;" @click="submit()">
+    <li class="vsHumanNav" @click="submit()">
       <div class="kui-row-center" style="justify-content:space-around;">
         <h4>SUBMIT</h4>
       </div>
