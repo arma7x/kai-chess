@@ -666,12 +666,7 @@ window.addEventListener("load", function() {
           {{/logs}}
         </div>`,
         mounted: function() {
-          var logs = []
-          for (var i=0;i<100;i++) {
-            logs.push({username: 'Test', text: `${i}, This is text, This is text, This is text, This is text, This is text, This is text, This is text`});
-          }
-          this.setData({ logs: logs });
-          //this.setData({ logs: state.getState('CHAT_LOGS') });
+          this.setData({ logs: state.getState('CHAT_LOGS') });
           $state.addStateListener('CHAT_LOGS', this.methods.chatLogs);
           setTimeout(this.methods.scrollToLast, 500);
         },
@@ -680,7 +675,7 @@ window.addEventListener("load", function() {
         },
         methods: {
           chatLogs: function(logs) {
-            //this.setData({ logs: logs });
+            this.setData({ logs: logs });
             setTimeout(this.methods.scrollToLast, 500);
           },
           scrollToLast: function() {
