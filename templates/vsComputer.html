@@ -1,42 +1,42 @@
 <div class="kui-flex-wrap">
   <ul class="kui-list kai-container">
-    <li class="vsComputerNav" @click="setLevel()">
+    <li class="vsComputerNav kui-divider" @click="setLevel()">
       <div class="kui-row-center">
         <span>Level</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ level }}</span>
       </div>
     </li>
-    <li class="vsComputerNav" @click="setColor()">
+    <li class="vsComputerNav kui-divider" @click="setColor()">
       <div class="kui-row-center">
         <span>Color</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ color }}</span>
       </div>
     </li>
-    <li class="vsComputerNav" @click="setVariant()">
+    <li class="vsComputerNav kui-divider" @click="setVariant()">
       <div class="kui-row-center">
         <span>Variant</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ variant }}</span>
       </div>
     </li>
-    <li>
+    <li class="kui-divider">
       <div class="kui-row-center">
         <span>Minutes per side</span>
         <input id="clock_limit" class="vsComputerNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="minutes" value="{{ clock_limit }}"/>
       </div>
     </li>
-    <li>
+    <li class="kui-divider">
       <div class="kui-row-center">
         <span>Increment</span>
         <input id="clock_increment" class="vsComputerNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="seconds" value="{{ clock_increment }}"/>
       </div>
     </li>
-    <li>
+    <li class="kui-divider">
       <div class="kui-row-center">
         <span>Days per turn</span>
         <input id="days" class="vsComputerNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="days" value="{{ days }}"/>
       </div>
     </li>
-    <li class="vsComputerNav" @click="submit()">
+    <li class="vsComputerNav kui-divider" @click="submit()">
       <div class="kui-row-center" style="justify-content:space-around;">
         <h4>SUBMIT</h4>
       </div>

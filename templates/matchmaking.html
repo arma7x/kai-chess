@@ -1,39 +1,39 @@
 <div class="kui-flex-wrap">
   <ul class="kui-list kai-container">
-    <li>
+    <li class="kui-divider">
       <input id="ratingRange" class="matchmakingNav kui-input" type="text" style="margin:2%;width:96%;" placeholder="Rating Range(1500-1800)" value="{{ ratingRange }}"/>
     </li>
-    <li class="matchmakingNav" @click="setRated()">
+    <li class="matchmakingNav kui-divider" @click="setRated()">
       <div class="kui-row-center">
         <span>Rated</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ rated }}</span>
       </div>
     </li>
-    <li class="matchmakingNav" @click="setColor()">
+    <li class="matchmakingNav kui-divider" @click="setColor()">
       <div class="kui-row-center">
         <span>Color</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ color }}</span>
       </div>
     </li>
-    <li class="matchmakingNav" @click="setVariant()">
+    <li class="matchmakingNav kui-divider" @click="setVariant()">
       <div class="kui-row-center">
         <span>Variant</span>
         <span style="color:#000;padding:5px;background-color:#fff;border-radius:2px;">{{ variant }}</span>
       </div>
     </li>
-    <li>
+    <li class="kui-divider">
       <div class="kui-row-center">
         <span>Minutes per side</span>
         <input id="time" class="matchmakingNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="minutes" value="{{ time }}"/>
       </div>
     </li>
-    <li>
+    <li class="kui-divider">
       <div class="kui-row-center">
         <span>Increment</span>
         <input id="increment" class="matchmakingNav kui-input" type="tel" style="margin:2%;width:40%;" placeholder="seconds" value="{{ increment }}"/>
       </div>
     </li>
-    <li class="matchmakingNav" @click="submit()">
+    <li class="matchmakingNav kui-divider" @click="submit()">
       <div class="kui-row-center" style="justify-content:space-around;">
         <h4>SUBMIT</h4>
       </div>
