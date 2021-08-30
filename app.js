@@ -788,7 +788,8 @@ window.addEventListener("load", function() {
         name: 'loadOnlineGame',
         data: {
           title: 'loadOnlineGame',
-          mvs: 0
+          mvs: 0,
+          chatHistory: []
         },
         templateUrl: document.location.origin + '/templates/loadLocalGame.html',
         mounted: function() {
@@ -796,6 +797,19 @@ window.addEventListener("load", function() {
           var a = document.getElementsByClassName('kui-router-m-top')
           a[0].style.marginTop = '0px'
           window['chess_stream'] = LICHESS_API.streamBoardState(game_id, this.methods.onStream)
+          LICHESS_API.chatHistory(game_id)[0]
+          .then((r) => {
+            var _temp = state.getState('CHAT_LOGS');
+            r.response.forEach((chat) => {
+              chat['username'] = chat['user'];
+            });
+            this.data.chatHistory = r.response;
+            var merged = [...r.response, ..._temp];
+            state.setState('CHAT_LOGS', merged);
+          })
+          .catch((e) => {
+            console.log(e);
+          })
         },
         unmounted: function() {
           state.setState('CHAT_LOGS', []);
@@ -970,7 +984,7 @@ window.addEventListener("load", function() {
               const chats = logs.filter((c) => {
                 return c.type === 'chatLine'
               });
-              if (chats.length > history.length) {
+              if (chats.length > history.length - this.data.chatHistory.length) {
                 const last = chats[chats.length - 1];
                 localforage.getItem('LICHESS_USER')
                 .then((u) => {
@@ -979,7 +993,7 @@ window.addEventListener("load", function() {
                     this.$router.showToast('New message');
                   }
                 })
-                state.setState('CHAT_LOGS', chats);
+                state.setState('CHAT_LOGS', [...this.data.chatHistory, ...chats]);
               }
             }
           },

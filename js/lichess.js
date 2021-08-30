@@ -47,6 +47,10 @@ const Lichess = (function() {
     return Lichess.xhr(`POST`, `https://lichess.org/api/board/game/${gameId}/chat`, opts, {}, headers);
   }
 
+  Lichess.prototype.chatHistory = function(gameId) {
+    return Lichess.xhr(`GET`, `https://lichess.org/api/board/game/${gameId}/chat`, {}, {}, this.headers);
+  }
+
   Lichess.prototype.seekChallenge = function(opts) {
     var headers = JSON.parse(JSON.stringify(this.headers));
     headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
