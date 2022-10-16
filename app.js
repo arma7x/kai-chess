@@ -1,5 +1,5 @@
 const CLIENT_ID = "bXKD7cYJPPMzmlfk";
-const REDIRECT_URL = 'https://malaysiaapi.herokuapp.com/lichess/api/v1/redirect';
+const REDIRECT_URL = 'https://malaysiaapi-arma7x.koyeb.app/lichess/api/v1/redirect';
 
 const createQueryString = (queries) => {
   if (Object.keys(queries).length > 0) {
@@ -99,7 +99,7 @@ window.addEventListener("load", function() {
 
   const loginPage = function ($router) {
     var ping = new XMLHttpRequest({ mozSystem: true });
-    ping.open('GET', 'https://malaysiaapi.herokuapp.com/', true);
+    ping.open('GET', 'https://malaysiaapi-arma7x.koyeb.app/', true);
     ping.send();
     const verifier = createVerifier()
     const challenge = createChallenge(verifier)
@@ -2062,7 +2062,7 @@ window.addEventListener("load", function() {
                 this.verticalNavIndex = 0;
                 this.setData({ LICHESS_ACCESS_TOKEN: null });
               } else if (selected.text === 'Sync') {
-                
+
               } else if (selected.text === 'Help & Support') {
                 this.$router.push('helpSupportPage');
               } else if (selected.text === 'Local Game') {
@@ -2200,7 +2200,7 @@ window.addEventListener("load", function() {
     if (document.activeElement.tagName === 'IFRAME') {
       document.activeElement.blur();
     }
-    
+
     if (document.visibilityState === 'hidden') {
       if (IFRAME_TIMER) {
         clearInterval(IFRAME_TIMER);
