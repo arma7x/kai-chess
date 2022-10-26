@@ -1098,6 +1098,8 @@ window.addEventListener("load", function() {
               if (selected.text === "Offer Draw") {
                 this.methods.sendDrawOffer('yes');
               } else if (selected.text === "Resign") {
+                if (!confirm("Are you sure to resign ?"))
+                  return
                 this.$router.showLoading();
                 LICHESS_API.resignGame(game_id)[0]
                 .finally(() => {
